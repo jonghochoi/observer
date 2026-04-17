@@ -1,0 +1,101 @@
+# ============================================================
+# eval_config.yaml
+# Observer — Automated Evaluation Pipeline
+# Copy and modify this file per experiment.
+#
+# Observer is framework-agnostic. The `runtime` section tells it how to launch
+# YOUR eval/record scripts; the scripts themselves are responsible for
+# constructing the env/policy and satisfying the contract documented in
+# observer/docs/INTEGRATION.md.
+#
+# Ready-made adapter configs live under observer/docs/adapters/ — for a
+# sharpa-rl-lab setup, see docs/adapters/sharpa.md.
+# ============================================================
+
+runtime:
+  # Required. Task identifier forwarded to the eval/record scripts.
+  task: ""
+
+  # Required. Python module launched as `python -m <eval_module>` for headless
+  # metrics collection. Must produce metrics.json + episodes.json per the
+  # INTEGRATION.md contract.
+  eval_module: ""
+
+  # Required when skip_video is false. Script launched under isaaclab.sh for
+  # GUI-based video recording. Receives the CLI contract documented in
+  # docs/INTEGRATION.md (#record-script-contract).
+  record_script: ""
+
+  num_envs: 4
+  headless: false                        # must be false for video recording
+  device: "cuda:0"
+  seed: 42
+
+  # Only consulted for record_script. Env vars are expanded at launch time.
+  isaac_lab_path: "${ISAACLAB_PATH}/isaaclab.sh"
+
+  # Framework-specific flags forwarded verbatim to each subprocess.
+  # e.g. for sharpa-rl-lab: extra_eval_args: ["--cache=/path/to/grasps.pkl"]
+  extra_eval_args: []
+  extra_record_args: []
+
+video:
+  resolution: [1920, 1080]
+  fps: 30
+  codec: libx264
+  pix_fmt: yuv420p
+  crf: 18                  # Lower = higher quality (18 recommended)
+  concat_views: true       # Combine all view videos into one grid mp4
+
+metrics:
+  collect_success_rate: true
+  collect_contact_force: true
+  collect_joint_velocity: true
+  collect_slip_events: true
+  collect_episode_length: true
+  collect_object_pose_error: true
+  collect_energy: true
+  num_eval_episodes: 50    # Episodes per checkpoint for statistical significance
+
+# ============================================================
+# Camera viewpoint definitions
+# eye:          camera position [x, y, z] (world frame, meters)
+# target:       look-at point  [x, y, z]
+# record_steps: simulation steps to capture at this viewpoint
+# ============================================================
+cameras:
+  - name: front
+    eye:    [0.6, 0.0,  0.4]
+    target: [0.0, 0.0,  0.1]
+    record_steps: 200
+
+  - name: front_left
+    eye:    [0.4, 0.5,  0.4]
+    target: [0.0, 0.0,  0.1]
+    record_steps: 200
+
+  - name: side
+    eye:    [0.0, 0.7,  0.3]
+    target: [0.0, 0.0,  0.1]
+    record_steps: 200
+
+  - name: rear
+    eye:    [-0.5, 0.0, 0.4]
+    target: [0.0,  0.0, 0.1]
+    record_steps: 200
+
+  - name: top
+    eye:    [0.0, 0.0,  0.9]
+    target: [0.0, 0.0,  0.0]
+    record_steps: 200
+
+# Pipeline flags
+skip_video: false
+skip_report: false
+dry_run: false
+save_raw_observations: false
+
+# Output directory structure
+frame_subdir:     "frames"
+video_subdir:     "videos"
+metrics_filename: "metrics.json"
