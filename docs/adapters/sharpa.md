@@ -1,25 +1,69 @@
-# Adapter — sharpa-rl-lab
+# 🔧 Adapter — sharpa-rl-lab
 
-[`sharpa-rl-lab`](../../..) ships its own PPO / ProprioAdapt stack built on
-`DirectRLEnv` + `GymStyleEnvWrapper`. The adapter lives entirely inside the
-sharpa repo; observer has zero sharpa-specific code.
+## 📑 Table of Contents
 
-- Metrics script: `rl_isaaclab.scripts.eval`
-- Record script: `rl_isaaclab/scripts/record.py`
-- Expected env instrumentation: `sharpa_wave_env.py` exposes the
-  `eval/success`, `eval/slip_detected`, `eval/fingertip_forces`,
-  `eval/joint_velocities`, `eval/joint_torques`, `eval/pos_error`,
-  `eval/rot_error_deg`, and `eval/init_{roll,pitch,yaw}_deg` keys in the
-  gym `info` dict — the eval script slices these per env to build
-  `episodes.json`.
+- [⚡ TL;DR](#-tldr)
+- [📋 Prerequisites](#-prerequisites)
+- [📌 Overview](#-overview)
+- [📌 Config Stanza](#-config-stanza)
+- [📌 Running](#-running)
+- [📌 Verifying the Integration](#-verifying-the-integration)
+- [🛠️ Troubleshooting](#️-troubleshooting)
+- [🗺️ Next Steps](#️-next-steps)
 
-Observation normalization (`running_mean_std`), checkpoint loading
-(`restore_test`), and algorithm selection (`agent_cfg["algo"]`) all follow
-sharpa's training-time conventions — no extra wiring is needed.
+---
 
-## Config stanza
+## ⚡ TL;DR
 
-Paste into `observer/configs/eval_config.yaml`:
+- `rl_isaaclab.scripts.eval` — eval script (invoked with python -m)
+- `rl_isaaclab/scripts/record.py` — record script
+- Paste the config stanza into `eval_config.yaml` and run immediately
+
+---
+
+## 📋 Prerequisites
+
+- sharpa-rl-lab installed: `pip install -e /path/to/sharpa-rl-lab`
+- observer installed: `pip install -e /path/to/observer`
+- Both packages must be in the **same Python environment**
+
+---
+
+## 📌 Overview
+
+[`sharpa-rl-lab`](../../..) is a PPO / ProprioAdapt stack built on `DirectRLEnv` + `GymStyleEnvWrapper`.
+The adapter code lives entirely inside the sharpa repo; observer has zero sharpa-specific code.
+
+| Item | Location |
+|:---|:---|
+| Metrics script | `rl_isaaclab.scripts.eval` |
+| Record script | `rl_isaaclab/scripts/record.py` |
+| Env instrumentation | `sharpa_wave_env.py` |
+
+### Env instrumentation (gym info keys)
+
+`sharpa_wave_env.py` exposes the following keys in the gym `info` dict:
+
+| Key | Description |
+|:---|:---|
+| `eval/success` | Episode success flag |
+| `eval/slip_detected` | Tactile contact signal transition |
+| `eval/fingertip_forces` | Fingertip forces (per-step) |
+| `eval/joint_velocities` | Joint velocities (per-step) |
+| `eval/joint_torques` | Joint torques (per-step) |
+| `eval/pos_error` | Position error (m) |
+| `eval/rot_error_deg` | Rotation error (deg) |
+| `eval/init_{roll,pitch,yaw}_deg` | Initial object pose |
+
+The eval script slices these keys per env to build `episodes.json`.
+
+Observation normalization (`running_mean_std`), checkpoint loading (`restore_test`), and algorithm selection (`agent_cfg["algo"]`) follow sharpa's training-time conventions — no extra wiring needed.
+
+---
+
+## 📌 Config Stanza
+
+Paste under `runtime:` in `observer/configs/eval_config.yaml`:
 
 ```yaml
 runtime:
@@ -31,39 +75,72 @@ runtime:
   seed: 42
   isaac_lab_path: "${ISAACLAB_PATH}/isaaclab.sh"
 
-  # Optional: forward sharpa-specific flags to eval.py
+  # optional: forward sharpa-specific flags
   # extra_eval_args:
   #   - "--cache=/path/to/grasps.pkl"
 ```
 
-## Running
+---
+
+## 📌 Running
 
 ```bash
 cd /path/to/observer
+
+# single checkpoint
 python eval_runner.py --checkpoint /path/to/sharpa_run/model_5000.pth
+
+# skip video (fast verification)
+python eval_runner.py --checkpoint /path/to/model_5000.pth --skip_video
 ```
 
-The metrics stage invokes `python -m rl_isaaclab.scripts.eval` from whichever
-Python env has both `sharpa-rl-lab` and `observer` installed (`pip install
--e .` in each). The record stage launches sharpa's `record.py` under
-`isaaclab.sh`; sharpa in turn imports `observer.isaac.{camera_controller,
-recorder}` as utility libraries.
+The metrics stage invokes `python -m rl_isaaclab.scripts.eval` from whichever Python environment has both sharpa-rl-lab and observer installed (`pip install -e .` in each).
+The record stage runs sharpa's `record.py` under `isaaclab.sh`; sharpa in turn imports `observer.isaac.{camera_controller, recorder}` as utility libraries.
 
-## Verifying the integration
+---
 
-A quick sanity check once both repos are installed:
+## 📌 Verifying the Integration
 
 ```bash
-# 1. Headless eval only — skip video for fast turnaround
+# 1. headless eval only — fast turnaround
 python eval_runner.py --checkpoint /path/to/model_5000.pth --skip_video
 
-# 2. Inspect outputs
-cat eval_results/*/metrics.json     | jq '.success_rate, .num_episodes'
-cat eval_results/*/episodes.json    | jq 'length'
+# 2. inspect outputs
+cat eval_results/*/metrics.json  | python -m json.tool | grep -E "success_rate|num_episodes"
+cat eval_results/*/episodes.json | python -m json.tool | python -c "import sys,json; d=json.load(sys.stdin); print(f'{len(d)} episodes')"
 ```
 
-The `success_rate` should match what `rl_isaaclab/scripts/play.py` reports
-on the same checkpoint (± episode sampling noise). If it does not, the
-likely culprits are (a) `running_mean_std` not being restored
-(check the `restore_test` call) or (b) the gym `info` keys listed above not
-being populated by `sharpa_wave_env.py::_get_rewards`.
+`success_rate` should match what `rl_isaaclab/scripts/play.py` reports on the same checkpoint (± episode sampling noise).
+
+---
+
+## 🛠️ Troubleshooting
+
+**`success_rate` differs from play.py result**
+
+Likely causes:
+- `running_mean_std` not restored → check the `restore_test` call
+- gym `info` keys not populated → check that `sharpa_wave_env.py::_get_rewards` fills the keys listed above
+
+**`episodes.json` is empty or has length 0**
+
+→ The `eval/init_{roll,pitch,yaw}_deg` keys are missing from the info dict.
+Check that the env records the initial object pose in the info dict on every episode reset.
+
+**`ModuleNotFoundError: rl_isaaclab`**
+
+→ sharpa-rl-lab is not installed in the current Python environment.
+```bash
+pip install -e /path/to/sharpa-rl-lab
+python -c "import rl_isaaclab; print('ok')"
+```
+
+---
+
+## 🗺️ Next Steps
+
+| Document | Content |
+|:---|:---|
+| [`../20_INTEGRATION_CONTRACT.md`](../20_INTEGRATION_CONTRACT.md) | Eval / record contract details |
+| [`../21_ADAPTER_GUIDE.md`](../21_ADAPTER_GUIDE.md) | Guide for writing a new adapter |
+| [`../30_METRICS_REFERENCE.md`](../30_METRICS_REFERENCE.md) | Collected metrics + failure taxonomy |
