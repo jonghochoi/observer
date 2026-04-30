@@ -116,9 +116,7 @@ class ExperimentTracker:
                 log.warning(f"TensorBoard init failed: {e}")
                 self._tb_writer = None
 
-    # ------------------------------------------------------------------
-    # Logging
-    # ------------------------------------------------------------------
+    # ── Logging ───────────────────────────────────────────────────────
     def log_eval_result(
         self,
         metrics: dict,
@@ -206,9 +204,7 @@ class ExperimentTracker:
         except Exception as e:
             log.warning(f"Video upload failed ({key}): {e}")
 
-    # ------------------------------------------------------------------
-    # Internal write
-    # ------------------------------------------------------------------
+    # ── Internal write ────────────────────────────────────────────────
     def _write(self, data: dict, step: int):
         if self._wandb_run:
             try:
@@ -223,9 +219,7 @@ class ExperimentTracker:
                 except Exception as e:
                     log.debug(f"TB scalar failed ({key}): {e}")
 
-    # ------------------------------------------------------------------
-    # Lifecycle
-    # ------------------------------------------------------------------
+    # ── Lifecycle ─────────────────────────────────────────────────────
     def finish(self):
         if self._wandb_run:
             wandb.finish()

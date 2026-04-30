@@ -60,9 +60,7 @@ class PipelineOrchestrator:
         self.output_root = output_root
         self.tracker     = tracker
 
-    # ------------------------------------------------------------------
-    # Public entry point
-    # ------------------------------------------------------------------
+    # ── Public entry point ────────────────────────────────────────────
     def run_single(self, checkpoint: Path) -> CheckpointResult:
         t0      = time.time()
         out_dir = self._make_output_dir(checkpoint)
@@ -110,9 +108,7 @@ class PipelineOrchestrator:
         log.info(f"  Done: {result.elapsed_sec:.1f}s | success={result.success}")
         return result
 
-    # ------------------------------------------------------------------
-    # Step 1: metrics collection
-    # ------------------------------------------------------------------
+    # ── Step 1: metrics collection ────────────────────────────────────
     def _run_metrics_collection(self, checkpoint: Path, out_dir: Path) -> dict:
         if self.config.dry_run:
             log.info("    [dry_run] Returning dummy metrics")
@@ -134,9 +130,7 @@ class PipelineOrchestrator:
         log.warning("    metrics.json was not created — returning empty dict")
         return {}
 
-    # ------------------------------------------------------------------
-    # Step 2: failure analysis
-    # ------------------------------------------------------------------
+    # ── Step 2: failure analysis ──────────────────────────────────────
     def _run_failure_analysis(self, metrics: dict, out_dir: Path):
         try:
             episodes_path = out_dir / "episodes.json"
@@ -171,9 +165,7 @@ class PipelineOrchestrator:
             log.warning(f"  Failure analysis error: {e}")
             return None
 
-    # ------------------------------------------------------------------
-    # Step 3: state coverage analysis
-    # ------------------------------------------------------------------
+    # ── Step 3: state coverage analysis ───────────────────────────────
     def _run_coverage_analysis(self, metrics: dict, out_dir: Path):
         try:
             episodes_path = out_dir / "episodes.json"
@@ -210,9 +202,7 @@ class PipelineOrchestrator:
             log.warning(f"  Coverage analysis error: {e}")
             return None, []
 
-    # ------------------------------------------------------------------
-    # Step 4: video recording
-    # ------------------------------------------------------------------
+    # ── Step 4: video recording ───────────────────────────────────────
     def _run_video_recording(self, checkpoint: Path, out_dir: Path) -> list[Path]:
         if self.config.dry_run:
             log.info("    [dry_run] Video recording skipped")
@@ -244,9 +234,7 @@ class PipelineOrchestrator:
         log.info(f"    Recording complete: {len(video_paths)} video(s)")
         return video_paths
 
-    # ------------------------------------------------------------------
-    # Video grid concat (ffmpeg)
-    # ------------------------------------------------------------------
+    # ── Video grid concat (ffmpeg) ────────────────────────────────────
     def _concat_videos(self, video_paths: list[Path], out_dir: Path) -> Optional[Path]:
         if not video_paths:
             return None
@@ -299,9 +287,7 @@ class PipelineOrchestrator:
         log.info(f"    Grid video saved: {out_path}")
         return out_path
 
-    # ------------------------------------------------------------------
-    # Step 5: experiment tracking
-    # ------------------------------------------------------------------
+    # ── Step 5: experiment tracking ───────────────────────────────────
     def _push_to_tracker(self, result: CheckpointResult):
         if self.tracker is None or result.metrics is None:
             return
@@ -323,9 +309,7 @@ class PipelineOrchestrator:
         except Exception as e:
             log.warning(f"  Experiment tracking failed: {e}")
 
-    # ------------------------------------------------------------------
-    # Internal helpers
-    # ------------------------------------------------------------------
+    # ── Internal helpers ──────────────────────────────────────────────
     def _build_metrics_cmd(
         self,
         checkpoint: Path,
@@ -378,7 +362,6 @@ class PipelineOrchestrator:
 
 
 # ── Helper functions ──────────────────────────────────────────────────
-
 def _run_subprocess(cmd: list[str], label: str):
     result = subprocess.run(cmd, capture_output=True, text=True)
     if result.returncode != 0:

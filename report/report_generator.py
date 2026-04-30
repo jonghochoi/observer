@@ -71,9 +71,7 @@ class ReportGenerator:
         log.info(f"Report generated: {report_path}")
         return report_path
 
-    # ------------------------------------------------------------------
-    # Top-level HTML assembly
-    # ------------------------------------------------------------------
+    # ── Top-level HTML assembly ───────────────────────────────────────
     def _render(self, valid: list, failed: list) -> str:
         ts    = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         n_all = len(valid) + len(failed)
@@ -134,9 +132,7 @@ class ReportGenerator:
 </body>
 </html>"""
 
-    # ------------------------------------------------------------------
-    # CSS
-    # ------------------------------------------------------------------
+    # ── CSS ───────────────────────────────────────────────────────────
     def _css(self) -> str:
         return """<style>
 :root{
@@ -264,9 +260,7 @@ video{width:100%;border-radius:5px;background:#000}
 }
 </style>"""
 
-    # ------------------------------------------------------------------
-    # Summary cards
-    # ------------------------------------------------------------------
+    # ── Summary cards ─────────────────────────────────────────────────
     def _summary_cards(self, valid: list, avg_sr: float) -> str:
         if not valid:
             return ""
@@ -305,9 +299,7 @@ video{width:100%;border-radius:5px;background:#000}
   </div>
 </div>"""
 
-    # ------------------------------------------------------------------
-    # Comparison table
-    # ------------------------------------------------------------------
+    # ── Comparison table ──────────────────────────────────────────────
     def _table(self, valid: list) -> str:
         rnk  = {1: "r1", 2: "r2", 3: "r3"}
         rows = []
@@ -355,9 +347,7 @@ video{width:100%;border-radius:5px;background:#000}
         )
         return hdr + "\n".join(rows) + "</tbody></table>"
 
-    # ------------------------------------------------------------------
-    # Failure mode doughnut charts
-    # ------------------------------------------------------------------
+    # ── Failure mode doughnut charts ──────────────────────────────────
     def _failure_pies(self, valid: list) -> str:
         cards = []
         for r in valid:
@@ -389,9 +379,7 @@ video{width:100%;border-radius:5px;background:#000}
             )
         return "\n".join(cards)
 
-    # ------------------------------------------------------------------
-    # Coverage image section
-    # ------------------------------------------------------------------
+    # ── Coverage image section ────────────────────────────────────────
     def _coverage_section(self, valid: list) -> str:
         plot_titles = {
             "success_heatmap":  "Success Rate Heatmap (Roll x Pitch)",
@@ -423,9 +411,7 @@ video{width:100%;border-radius:5px;background:#000}
             f'<div class="cov-grid">{"".join(cards)}</div>'
         )
 
-    # ------------------------------------------------------------------
-    # Video section
-    # ------------------------------------------------------------------
+    # ── Video section ─────────────────────────────────────────────────
     def _videos(self, valid: list) -> str:
         cards = []
         for r in valid:
@@ -460,9 +446,7 @@ video{width:100%;border-radius:5px;background:#000}
             return '<p style="color:var(--muted);padding:8px">No videos available.</p>'
         return "\n".join(cards)
 
-    # ------------------------------------------------------------------
-    # Failed checkpoint list
-    # ------------------------------------------------------------------
+    # ── Failed checkpoint list ────────────────────────────────────────
     def _failed_section(self, failed: list) -> str:
         if not failed:
             return ""
@@ -475,9 +459,7 @@ video{width:100%;border-radius:5px;background:#000}
             f'<div class="card"><ul class="fl">{items}</ul></div>'
         )
 
-    # ------------------------------------------------------------------
-    # JavaScript (Chart.js initialization)
-    # ------------------------------------------------------------------
+    # ── JavaScript (Chart.js initialization) ──────────────────────────
     def _scripts(self, valid: list) -> str:
         labels = [r.checkpoint.stem[-22:] for r in valid]
 

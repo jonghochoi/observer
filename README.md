@@ -178,6 +178,11 @@ observer/
 
 ## 🚀 Quick Start
 
+> **First time on this repo?** Run `./scripts/setup.sh` to install observer
+> and check prerequisites, then `observer doctor` to validate your config.
+> Common workflows are wrapped in `make help` — `make best DIR=runs/` is
+> the typical one-shot.
+
 ### 1️⃣ Point observer at your RL stack
 
 Observer is framework-agnostic. It launches **your** eval and (optional)

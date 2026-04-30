@@ -134,9 +134,7 @@ class MetricsCollector:
         self._episodes: list[EpisodeStats] = []
         self._current: Optional[EpisodeStats] = None
 
-    # ------------------------------------------------------------------
-    # Episode lifecycle
-    # ------------------------------------------------------------------
+    # ── Episode lifecycle ─────────────────────────────────────────────
     def on_episode_start(self, init_pose: Optional[dict] = None):
         """
         Parameters
@@ -246,9 +244,7 @@ class MetricsCollector:
             f"success={ep.success} | len={ep.length} | slip={ep.slip_count}"
         )
 
-    # ------------------------------------------------------------------
-    # Aggregation
-    # ------------------------------------------------------------------
+    # ── Aggregation ───────────────────────────────────────────────────
     def aggregate(self, checkpoint_name: str = "") -> EvalResult:
         """Aggregate collected episodes into an EvalResult."""
         eps = self._episodes

@@ -55,9 +55,7 @@ class CameraController:
         if camera_config_path:
             self.load_config(camera_config_path)
 
-    # ------------------------------------------------------------------
-    # Config loading
-    # ------------------------------------------------------------------
+    # ── Config loading ────────────────────────────────────────────────
     def load_config(self, path: str | Path):
         """Load camera pose list from a JSON file."""
         with open(path) as f:
@@ -79,9 +77,7 @@ class CameraController:
             "record_steps": record_steps,
         })
 
-    # ------------------------------------------------------------------
-    # Camera movement
-    # ------------------------------------------------------------------
+    # ── Camera movement ───────────────────────────────────────────────
     def set_pose(self, pose: dict):
         """Move the Isaac Sim viewport camera to the specified pose."""
         eye    = pose["eye"]
@@ -122,9 +118,7 @@ class CameraController:
         self._current_idx = idx
         self.set_pose(self.poses[idx])
 
-    # ------------------------------------------------------------------
-    # Automated sweep
-    # ------------------------------------------------------------------
+    # ── Automated sweep ───────────────────────────────────────────────
     def sweep(self, on_pose_set_callback=None):
         """
         Iterate through all viewpoints in sequence.
@@ -143,9 +137,7 @@ class CameraController:
                 on_pose_set_callback(pose)
         log.info("Camera sweep complete.")
 
-    # ------------------------------------------------------------------
-    # Orbital pose generation
-    # ------------------------------------------------------------------
+    # ── Orbital pose generation ───────────────────────────────────────
     @staticmethod
     def generate_orbit_poses(
         target: list[float],
