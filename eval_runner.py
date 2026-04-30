@@ -4,6 +4,7 @@ eval_runner.py
 OBSERVER — entry point for the checkpoint evaluation pipeline.
 
 Usage:
+    observer doctor                                              # pre-flight check
     python eval_runner.py --checkpoint runs/exp_001/model_5000.pth
     python eval_runner.py --checkpoint_dir runs/exp_001/
     python eval_runner.py --checkpoint_dir runs/ --recursive --latest_only
@@ -16,12 +17,9 @@ import sys
 import time
 from pathlib import Path
 
-from observer.configs.eval_config import EvalConfig
-from observer.pipeline.orchestrator import PipelineOrchestrator
-from observer.pipeline.experiment_tracker import ExperimentTracker
-from observer.pipeline.auto_select import CheckpointSelector, ScoringWeights
-from observer.report.report_generator import ReportGenerator
-from observer.brand import print_banner, print_flow, rule, log as obs_log, VERSION_STRING
+# Heavy pipeline imports (numpy, matplotlib, etc.) are deferred into main()
+# so that lightweight subcommands like `observer doctor` stay usable even
+# when those dependencies are missing — that is doctor's whole job.
 
 logging.basicConfig(
     level=logging.INFO,
@@ -120,6 +118,24 @@ def collect_checkpoints(args) -> list[Path]:
 
 
 def main():
+    # Subcommand dispatch — `observer doctor [...]` runs the pre-flight check.
+    # All other invocations fall through to the flat eval CLI to preserve
+    # existing call sites (`observer --checkpoint ...`).
+    if len(sys.argv) >= 2 and sys.argv[1] == "doctor":
+        from observer.doctor import main as doctor_main
+        sys.exit(doctor_main(sys.argv[2:]))
+
+    # Defer heavy imports until after dispatch, so doctor stays usable when
+    # numpy / matplotlib / etc. are missing.
+    from observer.configs.eval_config import EvalConfig
+    from observer.pipeline.orchestrator import PipelineOrchestrator
+    from observer.pipeline.experiment_tracker import ExperimentTracker
+    from observer.pipeline.auto_select import CheckpointSelector, ScoringWeights
+    from observer.report.report_generator import ReportGenerator
+    from observer.brand import (
+        print_banner, print_flow, rule, log as obs_log, VERSION_STRING,
+    )
+
     args = parse_args()
 
     # Config

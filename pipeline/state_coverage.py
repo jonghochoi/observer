@@ -108,9 +108,7 @@ class StateCoverageAnalyzer:
         self.roll_bins  = roll_bins
         self.pitch_bins = pitch_bins
 
-    # ------------------------------------------------------------------
-    # Main entry point
-    # ------------------------------------------------------------------
+    # ── Main entry point ──────────────────────────────────────────────
     def analyze(self, episodes: list[PosedEpisode]) -> CoverageStats:
         """Run full analysis, save all outputs, return numerical summary."""
         if not episodes:
@@ -131,9 +129,7 @@ class StateCoverageAnalyzer:
         log.info(f"Coverage analysis saved to: {self.output_dir}")
         return stats
 
-    # ------------------------------------------------------------------
-    # Numerical statistics
-    # ------------------------------------------------------------------
+    # ── Numerical statistics ──────────────────────────────────────────
     def _compute_stats(self, episodes: list[PosedEpisode]) -> CoverageStats:
         n  = len(episodes)
         sr = sum(ep.success for ep in episodes) / n
@@ -193,9 +189,7 @@ class StateCoverageAnalyzer:
             high_risk_zones=high_risk[:10],
         )
 
-    # ------------------------------------------------------------------
-    # Visualizations
-    # ------------------------------------------------------------------
+    # ── Visualizations ────────────────────────────────────────────────
     def _plot_success_heatmap(self, episodes: list[PosedEpisode]):
         """2-D success rate heatmap binned by roll x pitch."""
         rolls  = np.array([ep.init_roll_deg  for ep in episodes])

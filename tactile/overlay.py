@@ -32,7 +32,7 @@ except ImportError:
     log.warning("opencv-python not found — tactile overlay disabled.")
 
 
-# ── Sharpa Hand finger definitions ───────────────────────────────────
+# ── Sharpa Hand finger definitions ────────────────────────────────────
 FINGER_NAMES = ["thumb", "index", "middle", "ring", "pinky"]
 
 
@@ -108,9 +108,7 @@ class TactileOverlayRenderer:
             return self.layout
         return DEFAULT_LAYOUT_1080P if frame_h >= 900 else DEFAULT_LAYOUT_720P
 
-    # ------------------------------------------------------------------
-    # Single-frame rendering
-    # ------------------------------------------------------------------
+    # ── Single-frame rendering ────────────────────────────────────────
     def render_frame(
         self,
         frame: np.ndarray,
@@ -209,9 +207,7 @@ class TactileOverlayRenderer:
 
         return output
 
-    # ------------------------------------------------------------------
-    # Offline video post-processing
-    # ------------------------------------------------------------------
+    # ── Offline video post-processing ─────────────────────────────────
     def process_video(
         self,
         input_path: Path,
@@ -270,9 +266,7 @@ class TactileOverlayRenderer:
         log.info(f"Tactile overlay complete: {output_path} ({frame_idx} frames)")
         return True
 
-    # ------------------------------------------------------------------
-    # Colormap legend
-    # ------------------------------------------------------------------
+    # ── Colormap legend ───────────────────────────────────────────────
     def generate_legend(self, output_path: Path, width: int = 400, height: int = 60):
         """Generate a colormap legend image for use in reports."""
         if not _CV2_AVAILABLE:

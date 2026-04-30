@@ -90,7 +90,6 @@ VERSION_STRING = f"{PURPLE}{BOLD}OBSERVER{RESET} {DIM}v{VERSION}{RESET}"
 
 
 # ── Public functions ──────────────────────────────────────────────────
-
 def print_banner() -> None:
     """Print the full OBSERVER startup banner."""
     print(BANNER)

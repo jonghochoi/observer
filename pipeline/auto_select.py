@@ -102,9 +102,7 @@ class CheckpointSelector:
         self.weights = weights or ScoringWeights.balanced()
         self.output_root = output_root
 
-    # ------------------------------------------------------------------
-    # Scoring
-    # ------------------------------------------------------------------
+    # ── Scoring ───────────────────────────────────────────────────────
     def score_all(self, results: list) -> list[ScoredCheckpoint]:
         """
         Score and rank a list of CheckpointResult objects.
@@ -187,9 +185,7 @@ class CheckpointSelector:
         scored = self.score_all(results)
         return scored[0] if scored else None
 
-    # ------------------------------------------------------------------
-    # Deployment
-    # ------------------------------------------------------------------
+    # ── Deployment ────────────────────────────────────────────────────
     def deploy_best(
         self,
         results: list,
@@ -268,9 +264,7 @@ class CheckpointSelector:
 
         return deployed
 
-    # ------------------------------------------------------------------
-    # Ranking table (plain text)
-    # ------------------------------------------------------------------
+    # ── Ranking table (plain text) ────────────────────────────────────
     def ranking_table(self, results: list) -> str:
         scored = self.score_all(results)
         if not scored:

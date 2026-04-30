@@ -131,7 +131,6 @@ class FailureModeClassifier:
 
 
 # ── Aggregation ───────────────────────────────────────────────────────
-
 @dataclass
 class FailureAnalysis:
     """Per-checkpoint failure analysis result."""

@@ -70,9 +70,7 @@ class VideoRecorder:
 
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
-    # ------------------------------------------------------------------
-    # Recording control
-    # ------------------------------------------------------------------
+    # ── Recording control ─────────────────────────────────────────────
     def start(self, view_name: str):
         """Begin a recording session. Any active session is stopped first."""
         if self._current_name is not None:
@@ -133,9 +131,7 @@ class VideoRecorder:
 
         return self._frames_to_mp4(frame_dir, view_name)
 
-    # ------------------------------------------------------------------
-    # ffmpeg conversion
-    # ------------------------------------------------------------------
+    # ── ffmpeg conversion ─────────────────────────────────────────────
     def _frames_to_mp4(self, frame_dir: Path, view_name: str) -> Optional[Path]:
         """Convert a frame directory (rgb_NNNNN.png) to mp4 via ffmpeg."""
         if not frame_dir or not frame_dir.exists():
@@ -169,9 +165,7 @@ class VideoRecorder:
         log.info(f"  Video saved: {out_mp4} ({out_mp4.stat().st_size // 1024} KB)")
         return out_mp4
 
-    # ------------------------------------------------------------------
-    # Context manager support
-    # ------------------------------------------------------------------
+    # ── Context manager support ───────────────────────────────────────
     def __enter__(self):
         return self
 
@@ -181,7 +175,6 @@ class VideoRecorder:
 
 
 # ── Integrated helper for Isaac eval scripts ──────────────────────────
-
 def record_all_views(sim, policy, camera_controller, recorder: VideoRecorder, step_fn=None):
     """
     Run camera sweep and recording in a single call.
