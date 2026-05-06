@@ -47,7 +47,7 @@ pip install numpy pyyaml matplotlib
 pip install -e .
 
 # 1-D. 선택: 실험 트래킹
-pip install wandb tensorboard
+pip install tensorboard
 
 # 1-E. 선택: tactile 오버레이 (opencv)
 pip install opencv-python
@@ -79,7 +79,6 @@ Environment
   ✓ import numpy
   ✓ import yaml
   ✓ import matplotlib
-  ! wandb not installed — pip install wandb (optional)
   ! tensorboard not installed — pip install tensorboard (optional)
   ✓ ffmpeg in PATH
   ✓ nvidia-smi works
@@ -131,7 +130,7 @@ python eval_runner.py \
 
 `--dry_run` — Isaac 서브프로세스 생략, 더미 메트릭 주입  
 `--skip_video` — ffmpeg 비디오 단계 생략  
-`--no_tracking` — W&B / TensorBoard 로깅 비활성화
+`--no_tracking` — TensorBoard 로깅 비활성화
 
 ### ── 랭킹까지 포함한 완전 dry_run
 
