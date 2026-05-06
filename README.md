@@ -12,7 +12,6 @@
 
 [![Python](https://img.shields.io/badge/Python-3.10+-3776AB?logo=python&logoColor=white)](https://python.org)
 [![Isaac Lab](https://img.shields.io/badge/Isaac%20Lab-2.x-76B900?logo=nvidia&logoColor=white)](https://isaac-sim.github.io/IsaacLab/)
-[![W&B](https://img.shields.io/badge/Weights%20%26%20Biases-optional-FFBE00?logo=weightsandbiases&logoColor=black)](https://wandb.ai)
 [![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 
 🇰🇷 Korean onboarding: [`docs/ko/01_INTRO.md`](docs/ko/01_INTRO.md)
@@ -46,7 +45,7 @@ python eval_runner.py --checkpoint_dir runs/ --recursive \
 | 2 | **Failure mode classification** | 6-class rule chain, no training data required |
 | 3 | **State coverage analysis** | roll × pitch success heatmap |
 | 4 | **Multi-view video recording** | 5 viewpoints + 2×3 grid mp4 |
-| 5 | **Experiment tracking** | W&B / TensorBoard auto-detection |
+| 5 | **Experiment tracking** | TensorBoard auto-detection |
 | 6 | **Multi-objective ranking** | Weighted score: success rate, slip, energy, pose error |
 | 7 | **HTML report** | Includes charts, pie graphs, videos, and heatmaps |
 
@@ -68,7 +67,6 @@ python eval_runner.py --checkpoint_dir runs/exp_001/                   # directo
 python eval_runner.py --checkpoint_dir runs/ --recursive --latest_only # recursive
 python eval_runner.py --checkpoint_dir runs/ \
     --auto_select --select_weights hardware_safe --deploy_top_k 2      # ranking + deploy
-python eval_runner.py --checkpoint_dir runs/ --skip_video --wandb_project my-project
 python eval_runner.py --checkpoint_dir runs/ --dry_run                 # validation only
 ```
 

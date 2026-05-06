@@ -1,13 +1,13 @@
 """
-experiment_tracker.py
-======================
-W&B / TensorBoard integration module.
+observer/pipeline/experiment_tracker.py
+========================================
+TensorBoard integration module for logging eval results.
 
 Design principles:
-  - Auto-detects whichever backend(s) are installed and uses them simultaneously.
-  - Silently no-ops when neither backend is available.
+  - Auto-detects TensorBoard and silently no-ops when unavailable.
   - Uses the training step number extracted from the checkpoint filename as the
     shared x-axis, so eval points overlay directly on training curves.
+  - Videos are stored locally; their path is logged rather than uploaded.
 
 Logged metrics:
   eval/success_rate, eval/contact_force_rms, eval/slip_per_episode,
@@ -23,15 +23,7 @@ from typing import Optional
 log = logging.getLogger("observer.pipeline.experiment_tracker")
 
 # ── Backend detection ─────────────────────────────────────────────────
-_WANDB_AVAILABLE = False
 _TB_AVAILABLE = False
-
-try:
-    import wandb
-    _WANDB_AVAILABLE = True
-    log.info("W&B detected")
-except ImportError:
-    pass
 
 try:
     from torch.utils.tensorboard import SummaryWriter
@@ -45,10 +37,10 @@ except ImportError:
     except ImportError:
         pass
 
-if not _WANDB_AVAILABLE and not _TB_AVAILABLE:
+if not _TB_AVAILABLE:
     log.warning(
-        "Neither W&B nor TensorBoard is installed — experiment tracking disabled.\n"
-        "  Install: pip install wandb   or   pip install tensorboard"
+        "TensorBoard is not installed — experiment tracking disabled.\n"
+        "  Install: pip install tensorboard"
     )
 
 
@@ -57,20 +49,12 @@ from observer.pipeline.utils import extract_step as _extract_step
 
 class ExperimentTracker:
     """
-    Records eval results to W&B and/or TensorBoard simultaneously.
+    Records eval results to TensorBoard.
 
     Parameters
     ----------
-    project : str
-        W&B project name.
-    run_name : str | None
-        W&B run name. Auto-generated if None.
     tb_log_dir : str | Path
         TensorBoard log directory.
-    tags : list[str]
-        W&B run tags.
-    config : dict
-        Experiment hyperparameters logged to W&B config.
     enabled : bool
         Master switch. Set False to disable all tracking without
         changing call sites.
@@ -78,43 +62,22 @@ class ExperimentTracker:
 
     def __init__(
         self,
-        project: str = "sharpa-hand-eval",
-        run_name: Optional[str] = None,
         tb_log_dir: str | Path = "tb_logs",
-        tags: Optional[list[str]] = None,
-        config: Optional[dict] = None,
         enabled: bool = True,
     ):
-        self.enabled = enabled and (_WANDB_AVAILABLE or _TB_AVAILABLE)
-        self._wandb_run = None
+        self.enabled = enabled and _TB_AVAILABLE
         self._tb_writer = None
 
         if not self.enabled:
             return
 
-        # W&B init
-        if _WANDB_AVAILABLE:
-            try:
-                self._wandb_run = wandb.init(
-                    project=project,
-                    name=run_name,
-                    tags=tags or [],
-                    config=config or {},
-                    resume="allow",
-                )
-                log.info(f"W&B run started: {self._wandb_run.url}")
-            except Exception as e:
-                log.warning(f"W&B init failed: {e}")
-                self._wandb_run = None
-
-        # TensorBoard init
-        if _TB_AVAILABLE:
-            try:
-                self._tb_writer = SummaryWriter(log_dir=str(tb_log_dir))
-                log.info(f"TensorBoard log dir: {tb_log_dir}")
-            except Exception as e:
-                log.warning(f"TensorBoard init failed: {e}")
-                self._tb_writer = None
+        try:
+            self._tb_writer = SummaryWriter(log_dir=str(tb_log_dir))
+            log.info(f"TensorBoard log dir: {tb_log_dir}")
+        except Exception as e:
+            log.warning(f"TensorBoard init failed: {e}")
+            self._tb_writer = None
+            self.enabled = False
 
     # ── Logging ───────────────────────────────────────────────────────
     def log_eval_result(
@@ -168,8 +131,7 @@ class ExperimentTracker:
         log.info(
             f"  [tracker] step={global_step} | "
             f"success={log_data['eval/success_rate']:.3f} | "
-            f"backends={'wandb ' if self._wandb_run else ''}"
-            f"{'tb' if self._tb_writer else ''}"
+            f"backend={'tb' if self._tb_writer else 'none'}"
         )
 
     def log_coverage_stats(self, stats, step: int):
@@ -182,35 +144,31 @@ class ExperimentTracker:
         }, step)
 
     def log_image(self, key: str, image_path: Path, step: int):
-        """Upload a coverage/heatmap image to W&B."""
-        if not self.enabled or not self._wandb_run:
+        """Upload a coverage/heatmap image to TensorBoard."""
+        if not self.enabled or not self._tb_writer:
             return
         if not image_path.exists():
             return
         try:
-            wandb.log({key: wandb.Image(str(image_path))}, step=step)
+            import numpy as np
+            import matplotlib.image as mpimg
+            img = mpimg.imread(str(image_path))  # (H, W, C) float32
+            if img.ndim == 2:
+                img = img[np.newaxis, :]          # (1, H, W) grayscale
+            else:
+                img = img[:, :, :3].transpose(2, 0, 1)  # (C, H, W), drop alpha
+            self._tb_writer.add_image(key, img, global_step=step)
         except Exception as e:
-            log.warning(f"Image upload failed ({key}): {e}")
+            log.warning(f"Image log failed ({key}): {e}")
 
     def log_video(self, key: str, video_path: Path, step: int, fps: int = 30):
-        """Upload a recorded video to W&B."""
-        if not self.enabled or not self._wandb_run:
-            return
+        """Log the path of a recorded video — TensorBoard does not support file-based video upload."""
         if not video_path.exists():
             return
-        try:
-            wandb.log({key: wandb.Video(str(video_path), fps=fps)}, step=step)
-            log.info(f"  [W&B] video uploaded: {key}")
-        except Exception as e:
-            log.warning(f"Video upload failed ({key}): {e}")
+        log.info(f"  [tracker] video saved locally: {video_path}  (key={key}, step={step})")
 
     # ── Internal write ────────────────────────────────────────────────
     def _write(self, data: dict, step: int):
-        if self._wandb_run:
-            try:
-                wandb.log(data, step=step)
-            except Exception as e:
-                log.warning(f"W&B log failed: {e}")
         if self._tb_writer:
             for key, value in data.items():
                 try:
@@ -221,8 +179,6 @@ class ExperimentTracker:
 
     # ── Lifecycle ─────────────────────────────────────────────────────
     def finish(self):
-        if self._wandb_run:
-            wandb.finish()
         if self._tb_writer:
             self._tb_writer.close()
 
