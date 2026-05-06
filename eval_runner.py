@@ -127,7 +127,7 @@ def main():
     from observer.pipeline.orchestrator import PipelineOrchestrator
     from observer.pipeline.experiment_tracker import ExperimentTracker
     from observer.pipeline.auto_select import CheckpointSelector, ScoringWeights
-    from observer.report.report_generator import ReportGenerator
+    from observer.pipeline.report_generator import ReportGenerator
     from observer.brand import (
         print_banner, print_flow, rule, log as obs_log, VERSION_STRING,
     )

@@ -1,6 +1,6 @@
 """
-tactile_overlay.py
-==================
+observer/viz/tactile_overlay.py
+================================
 Overlays Fingertip Deform Map data onto rendered video frames.
 
 Target hardware: Sharpa Hand (22-DOF, 5 fingers)
@@ -22,7 +22,7 @@ from typing import Optional
 
 import numpy as np
 
-log = logging.getLogger("observer.tactile.overlay")
+log = logging.getLogger("observer.viz.tactile_overlay")
 
 try:
     import cv2

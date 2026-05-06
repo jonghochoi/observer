@@ -1,6 +1,6 @@
 """
-report_generator.py
-===================
+observer/pipeline/report_generator.py
+======================================
 Generates a self-contained HTML evaluation report from CheckpointResult objects.
 
 Report sections:
@@ -19,7 +19,7 @@ import logging
 from datetime import datetime
 from pathlib import Path
 
-log = logging.getLogger("observer.report.report_generator")
+log = logging.getLogger("observer.pipeline.report_generator")
 
 # Failure mode display strings and colors (mirrors failure_classifier.py)
 _FAILURE_LABELS = {
