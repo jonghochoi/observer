@@ -30,15 +30,20 @@ All files under `docs/` and `README.md` follow these rules (established in nexus
 | H1 | `# 🔧 Document Title` | One thematic emoji + plain title. One H1 per doc. |
 | H2 | `## Section title` | **No emoji ever.** Sentence case. Plain text. |
 | H3 | `### ── Subsection title` | Prefix `── ` (U+2500 × 2 + space). No emoji. Sentence case. |
-| H4 | `#### ── Sub-subsection title` | Same `── ` prefix. No emoji. Sentence case. |
+| H4 | `#### ▸ Sub-subsection title` | Prefix `▸` (U+25B8, BLACK RIGHT-POINTING SMALL TRIANGLE). Visually distinct from H3. |
+
+**H3 vs H4 prefix characters:**
+- **H3** uses `──` (U+2500 × 2) — matches the source-code section-divider convention.
+- **H4** uses `▸` (U+25B8) — visually distinct from H3 to make nesting depth immediately apparent.
 
 **Body emoji** — allowed in: tables (sparingly), blockquote callouts (`> 📖`, `> ⚠️`, `> 💡`, 🇰🇷 flag). Never in H2+ headers.
 
 **Em dash `—`** for label/explanation joins in prose (not ` - `). Hyphen-minus `-` stays for compound words and CLI flags only.
 
 **GitHub anchor caveats:**
-- GitHub strips `──` from H3/H4 but keeps the trailing space → leading hyphen in anchor.
-  `### ── Method selection` → anchor `#-method-selection`.
+- Both `──` (H3) and `▸` (H4) are stripped by GitHub but the trailing space is kept → **leading hyphen** in anchor:
+  - `### ── Method selection` → anchor `#-method-selection`
+  - `#### ▸ On local machine` → anchor `#-on-local-machine`
 - Em dash in H2: `## Step 0 — Verify` → anchor `#step-0--verify` (double hyphen from em dash).
 - TOC links to H3/H4 must include the leading hyphen; H2 links do not.
 
