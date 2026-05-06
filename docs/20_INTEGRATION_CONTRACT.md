@@ -209,7 +209,7 @@ from observer.pipeline.orchestrator import PipelineOrchestrator
 from observer.io.result_locator import locate_results, read_metrics
 
 from nexus.logger.run_info import read_run_info
-from upload_eval import upload_eval                # nexus/post_upload/upload_eval.py
+from nexus.post_upload.upload_eval import upload_eval
 
 
 def main(output_dir: Path, eval_config_path: Path) -> None:
