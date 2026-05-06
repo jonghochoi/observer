@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "observer"
+version = "0.1.0"
+description = "Automated evaluation pipeline for dexterous manipulation RL policies"
+requires-python = ">=3.10"
+dependencies = [
+    "numpy",
+    "pyyaml",
+    "matplotlib",
+]
+
+[project.optional-dependencies]
+tracking = ["wandb", "tensorboard"]
+tactile  = ["opencv-python"]
+
+[project.scripts]
+observer = "eval_runner:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+namespaces = true
+
+[tool.ruff]
+line-length = 100
+indent-width = 4
+
+[tool.ruff.format]
+skip-magic-trailing-comma = true
