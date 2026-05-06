@@ -7,6 +7,7 @@
 - [§1 — Eval script contract](#1--eval-script-contract)
 - [§2 — Record script contract (optional)](#2--record-script-contract-optional)
 - [§3 — Minimum env instrumentation](#3--minimum-env-instrumentation)
+- [§4 — Post-training upload glue](#4--post-training-upload-glue)
 - [Troubleshooting](#troubleshooting)
 - [Next steps](#next-steps)
 
@@ -167,6 +168,70 @@ You can import the utility libraries (`observer.isaac.CameraController`, `observ
 | `contact_forces`, `joint_velocities` *(optional)* | Per-step RMS aggregates |
 
 Observer never touches the env directly. Your eval script reads these values from the gym `info` dict, internal buffers, or whatever instrumentation you already have, and writes `episodes.json`.
+
+---
+
+## §4 — Post-training upload glue
+
+A typical workflow runs observer on the trainer's `best.pth` and ships the
+results to the same experiment-tracking system that recorded the training
+run. Observer never depends on any uploader — the glue lives in the
+**training repo** and imports both observer and the uploader directly.
+
+To make that glue easy, observer exposes a result-discovery helper:
+
+```python
+from observer.io.result_locator import locate_results, read_metrics
+
+results = locate_results(output_root)            # most-recent <parent>__<stem>__<ts>/
+metrics = read_metrics(results)                  # {success_rate: 0.87, ...}
+print(results.report_html, results.combined_video, results.videos)
+```
+
+`locate_results` returns an `ObserverResults` dataclass with paths to
+`metrics.json`, `episodes.json`, `eval_config_snapshot.yaml`, the per-camera
+videos, the optional `combined_grid.mp4`, the coverage PNGs, and the
+top-level `eval_report.html`. Missing files are reported as `None` /
+empty list — the orchestrator already tolerates partial bundles.
+
+`read_metrics` flattens `metrics.json` into `{dotted_key: float}`,
+skipping non-numeric leaves (`checkpoint`, `dominant_failure_mode`, ...)
+so the result can be promoted as scalar metrics by any uploader.
+
+### ── Example: train → eval → upload to nexus
+
+```python
+# scripts/post_train_eval.py — lives in the training repo, not in observer.
+from pathlib import Path
+
+from observer.configs.eval_config import EvalConfig
+from observer.pipeline.orchestrator import PipelineOrchestrator
+from observer.io.result_locator import locate_results, read_metrics
+
+from nexus.logger.eval_logger import EvalLogger
+
+
+def main(output_dir: Path, eval_config_path: Path) -> None:
+    checkpoint = output_dir / "checkpoints" / "best.pth"
+    eval_root  = output_dir / "eval"
+
+    cfg = EvalConfig.from_yaml(str(eval_config_path))
+    PipelineOrchestrator(cfg, output_root=eval_root).run_single(checkpoint)
+
+    results = locate_results(eval_root)
+    metrics = read_metrics(results)
+
+    ev = EvalLogger.from_run_info(output_dir)   # reads .nexus_run.json written by make_logger()
+    ev.upload(
+        eval_dir=eval_root,
+        metrics=metrics,
+        tags={"checkpoint": "best.pth"},
+    )
+```
+
+Observer doesn't import nexus and nexus doesn't import observer. The two
+projects only meet inside this glue script — swap `EvalLogger` for any
+other uploader (W&B, custom HTTP, ...) without touching observer.
 
 ---
 
