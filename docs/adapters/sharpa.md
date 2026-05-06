@@ -1,19 +1,19 @@
-# 🔧 Adapter — sharpa-rl-lab
+# 🤖 Adapter — sharpa-rl-lab
 
-## 📑 Table of Contents
+## Table of contents
 
-- [⚡ TL;DR](#-tldr)
-- [📋 Prerequisites](#-prerequisites)
-- [📌 Overview](#-overview)
-- [📌 Config Stanza](#-config-stanza)
-- [📌 Running](#-running)
-- [📌 Verifying the Integration](#-verifying-the-integration)
-- [🛠️ Troubleshooting](#️-troubleshooting)
-- [🗺️ Next Steps](#️-next-steps)
+- [TL;DR](#tldr)
+- [Prerequisites](#prerequisites)
+- [Overview](#overview)
+- [Config stanza](#config-stanza)
+- [Running](#running)
+- [Verifying the integration](#verifying-the-integration)
+- [Troubleshooting](#troubleshooting)
+- [Next steps](#next-steps)
 
 ---
 
-## ⚡ TL;DR
+## TL;DR
 
 - `rl_isaaclab.scripts.eval` — eval script (invoked with python -m)
 - `rl_isaaclab/scripts/record.py` — record script
@@ -21,7 +21,7 @@
 
 ---
 
-## 📋 Prerequisites
+## Prerequisites
 
 - sharpa-rl-lab installed: `pip install -e /path/to/sharpa-rl-lab`
 - observer installed: `pip install -e /path/to/observer`
@@ -29,7 +29,7 @@
 
 ---
 
-## 📌 Overview
+## Overview
 
 [`sharpa-rl-lab`](../../..) is a PPO / ProprioAdapt stack built on `DirectRLEnv` + `GymStyleEnvWrapper`.
 The adapter code lives entirely inside the sharpa repo; observer has zero sharpa-specific code.
@@ -40,7 +40,7 @@ The adapter code lives entirely inside the sharpa repo; observer has zero sharpa
 | Record script | `rl_isaaclab/scripts/record.py` |
 | Env instrumentation | `sharpa_wave_env.py` |
 
-### Env instrumentation (gym info keys)
+### ── Env instrumentation (gym info keys)
 
 `sharpa_wave_env.py` exposes the following keys in the gym `info` dict:
 
@@ -61,7 +61,7 @@ Observation normalization (`running_mean_std`), checkpoint loading (`restore_tes
 
 ---
 
-## 📌 Config Stanza
+## Config stanza
 
 Paste under `runtime:` in `observer/configs/eval_config.yaml`:
 
@@ -82,7 +82,7 @@ runtime:
 
 ---
 
-## 📌 Running
+## Running
 
 ```bash
 cd /path/to/observer
@@ -99,7 +99,7 @@ The record stage runs sharpa's `record.py` under `isaaclab.sh`; sharpa in turn i
 
 ---
 
-## 📌 Verifying the Integration
+## Verifying the integration
 
 ```bash
 # 1. headless eval only — fast turnaround
@@ -114,7 +114,7 @@ cat eval_results/*/episodes.json | python -m json.tool | python -c "import sys,j
 
 ---
 
-## 🛠️ Troubleshooting
+## Troubleshooting
 
 **`success_rate` differs from play.py result**
 
@@ -137,7 +137,7 @@ python -c "import rl_isaaclab; print('ok')"
 
 ---
 
-## 🗺️ Next Steps
+## Next steps
 
 | Document | Content |
 |:---|:---|

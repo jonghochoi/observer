@@ -1,17 +1,17 @@
 # 📊 30 · Metrics Reference
 
-## 📑 Table of Contents
+## Table of contents
 
-- [⚡ TL;DR](#-tldr)
-- [📦 Collected Metrics](#-collected-metrics)
-- [🔍 Failure Mode Taxonomy](#-failure-mode-taxonomy)
-- [📋 Acting on the Failure Distribution](#-acting-on-the-failure-distribution)
-- [🛠️ Troubleshooting](#️-troubleshooting)
-- [🗺️ Next Steps](#️-next-steps)
+- [TL;DR](#tldr)
+- [Collected metrics](#collected-metrics)
+- [Failure mode taxonomy](#failure-mode-taxonomy)
+- [Acting on the failure distribution](#acting-on-the-failure-distribution)
+- [Troubleshooting](#troubleshooting)
+- [Next steps](#next-steps)
 
 ---
 
-## ⚡ TL;DR
+## TL;DR
 
 - Observer collects **8 quantitative metrics** per episode.
 - A **6-class priority rule chain** classifies failure type per episode — no training data required, works from checkpoint zero.
@@ -19,11 +19,11 @@
 
 ---
 
-## 📦 Collected Metrics
+## Collected metrics
 
 All per-episode aggregated metrics stored in `metrics.json`:
 
-| 📏 Metric | 📐 Unit | 💬 Interpretation | 🚨 When it's bad |
+| Metric | Unit | Interpretation | When it's bad |
 |:---|:---:|:---|:---|
 | `success_rate` | % | Episode success rate | Basic task failure |
 | `contact_force_rms` | N | Fingertip RMS force — lower = more stable grasp | Grip too strong or unstable |
@@ -38,11 +38,11 @@ All per-episode aggregated metrics stored in `metrics.json`:
 
 ---
 
-## 🔍 Failure Mode Taxonomy
+## Failure mode taxonomy
 
 Episodes are classified by a **priority-ordered rule chain** — the first matching rule wins:
 
-| Priority | 🏷️ Mode | 📋 Rule | ⚡ Hardware Implication |
+| Priority | Mode | Rule | Hardware implication |
 |:---:|:---|:---|:---|
 | 1 | `early_drop` | Episode length < 50 steps | Grasp initialization failure |
 | 2 | `singularity_hit` | Max joint velocity > 5 rad/s | Actuator overload risk |
@@ -54,7 +54,7 @@ Episodes are classified by a **priority-ordered rule chain** — the first match
 > 💡 **Advantage of rule-based classification:** immediately usable from checkpoint zero with no training data.
 > Decisions are fully explainable — "classified as `late_slip` because rule 3 matched."
 
-### Reading the failure distribution
+### ── Reading the failure distribution
 
 Example `failure_distribution` field from `metrics.json`:
 
@@ -74,9 +74,9 @@ Example `failure_distribution` field from `metrics.json`:
 
 ---
 
-## 📋 Acting on the Failure Distribution
+## Acting on the failure distribution
 
-| 🏷️ Dominant failure mode | 🔧 Recommended action |
+| Dominant failure mode | Recommended action |
 |:---|:---|
 | High `late_slip` share | Increase the **slip penalty** in the reward function |
 | High `early_drop` share | Revisit grasp initialization / curriculum design |
@@ -92,7 +92,7 @@ Example `failure_distribution` field from `metrics.json`:
 
 ---
 
-## 🛠️ Troubleshooting
+## Troubleshooting
 
 **`failure_distribution` is empty or all episodes are `unknown`**
 
@@ -114,7 +114,7 @@ See `sharpa_wave_env.py` for an example: the `eval/slip_detected` key detects co
 
 ---
 
-## 🗺️ Next Steps
+## Next steps
 
 | Document | Content |
 |:---|:---|

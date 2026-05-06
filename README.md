@@ -21,7 +21,7 @@
 
 ---
 
-## 🧠 Why This Exists
+## Why this exists
 
 Dexterous manipulation research generates checkpoints far faster than humans can meaningfully review.
 `success_rate = 0.91` looks great — but it may hide 3 slips/episode, 5× energy usage, and joint velocity spikes.
@@ -31,7 +31,7 @@ Manual review always introduces selection, recency, and fatigue bias.
 
 ---
 
-## ✅ What This Pipeline Does
+## What this pipeline does
 
 **One command. Everything automated.**
 
@@ -40,19 +40,19 @@ python eval_runner.py --checkpoint_dir runs/ --recursive \
     --auto_select --select_weights hardware_safe
 ```
 
-| # | 🔧 Step | 📤 Output |
+| # | Step | Output |
 |:---:|:---|:---|
-| 1 | 📦 **Metrics collection** | `metrics.json` — 8 quantitative metrics |
-| 2 | 🔍 **Failure mode classification** | 6-class rule chain, no training data required |
-| 3 | 🗺️ **State coverage analysis** | roll × pitch success heatmap |
-| 4 | 🎬 **Multi-view video recording** | 5 viewpoints + 2×3 grid mp4 |
-| 5 | 📡 **Experiment tracking** | W&B / TensorBoard auto-detection |
-| 6 | 🏆 **Multi-objective ranking** | Weighted score: success rate, slip, energy, pose error |
-| 7 | 📄 **HTML report** | Includes charts, pie graphs, videos, and heatmaps |
+| 1 | **Metrics collection** | `metrics.json` — 8 quantitative metrics |
+| 2 | **Failure mode classification** | 6-class rule chain, no training data required |
+| 3 | **State coverage analysis** | roll × pitch success heatmap |
+| 4 | **Multi-view video recording** | 5 viewpoints + 2×3 grid mp4 |
+| 5 | **Experiment tracking** | W&B / TensorBoard auto-detection |
+| 6 | **Multi-objective ranking** | Weighted score: success rate, slip, energy, pose error |
+| 7 | **HTML report** | Includes charts, pie graphs, videos, and heatmaps |
 
 ---
 
-## 🚀 Quick Start
+## Quick start
 
 ```bash
 # 1) Install
@@ -89,7 +89,7 @@ runtime:
 
 ---
 
-## 📐 Architecture (Brief)
+## Architecture
 
 ```
 eval_runner.py
@@ -106,7 +106,7 @@ eval_runner.py
 
 ---
 
-## 📚 Documentation
+## Documentation
 
 | Document | Audience | Content |
 |:---|:---|:---|
