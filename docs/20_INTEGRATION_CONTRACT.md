@@ -1,18 +1,18 @@
 # 🔌 20 · Integration Contract
 
-## 📑 Table of Contents
+## Table of contents
 
-- [⚡ TL;DR](#-tldr)
-- [📋 Prerequisites](#-prerequisites)
-- [📌 §1 Eval Script Contract](#-1-eval-script-contract)
-- [📌 §2 Record Script Contract (Optional)](#-2-record-script-contract-optional)
-- [📌 §3 Minimum Env Instrumentation](#-3-minimum-env-instrumentation)
-- [🛠️ Troubleshooting](#️-troubleshooting)
-- [🗺️ Next Steps](#️-next-steps)
+- [TL;DR](#tldr)
+- [Prerequisites](#prerequisites)
+- [§1 — Eval script contract](#1--eval-script-contract)
+- [§2 — Record script contract (optional)](#2--record-script-contract-optional)
+- [§3 — Minimum env instrumentation](#3--minimum-env-instrumentation)
+- [Troubleshooting](#troubleshooting)
+- [Next steps](#next-steps)
 
 ---
 
-## ⚡ TL;DR
+## TL;DR
 
 - Observer runs **two kinds of subprocesses**: a headless eval script and a GUI record script.
 - Each script just needs to satisfy the contract below. The RL framework doesn't matter.
@@ -20,7 +20,7 @@
 
 ---
 
-## 📋 Prerequisites
+## Prerequisites
 
 - Observer installed (`pip install -e .` in the observer root)
 - The `runtime` section of `configs/eval_config.yaml` is filled in
@@ -28,7 +28,7 @@
 
 ---
 
-## 📌 §1 Eval Script Contract
+## §1 — Eval script contract
 
 Observer invokes the eval module as:
 
@@ -46,7 +46,7 @@ python -m <runtime.eval_module> \
     <runtime.extra_eval_args...>
 ```
 
-### Required CLI Flags
+### ── Required CLI flags
 
 | Flag | Description |
 |:---|:---|
@@ -62,9 +62,9 @@ python -m <runtime.eval_module> \
 
 Additional flags in `runtime.extra_eval_args` are forwarded as-is (e.g. grasp cache path).
 
-### Required Outputs
+### ── Required outputs
 
-#### `metrics.json`
+#### ── `metrics.json`
 
 Using `observer.pipeline.metrics_collector.MetricsCollector` produces the correct schema automatically. If writing manually:
 
@@ -92,7 +92,7 @@ Minimum fields (missing fields cause the corresponding analysis to be skipped):
 {"checkpoint": "...", "num_episodes": 50, "success_rate": 0.84}
 ```
 
-#### `episodes.json`
+#### ── `episodes.json`
 
 A JSON array of per-episode dicts. Each entry:
 
@@ -121,7 +121,7 @@ Schema definition: `observer.pipeline.metrics_collector.EpisodeStats`
 
 ---
 
-## 📌 §2 Record Script Contract (Optional)
+## §2 — Record script contract (optional)
 
 If video recording is not needed, set `skip_video: true` in your config and skip this section.
 
@@ -153,7 +153,7 @@ You can import the utility libraries (`observer.isaac.CameraController`, `observ
 
 ---
 
-## 📌 §3 Minimum Env Instrumentation
+## §3 — Minimum env instrumentation
 
 `FailureModeClassifier` and `StateCoverageAnalyzer` consume per-episode fields. Your environment must expose at minimum:
 
@@ -170,7 +170,7 @@ Observer never touches the env directly. Your eval script reads these values fro
 
 ---
 
-## 🛠️ Troubleshooting
+## Troubleshooting
 
 **`coverage/` or failure distribution is empty**
 
@@ -194,7 +194,7 @@ Add a `parse_known_args` pattern to the eval script to silently ignore unknown f
 
 ---
 
-## 🗺️ Next Steps
+## Next steps
 
 | Document | Content |
 |:---|:---|

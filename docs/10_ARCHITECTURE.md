@@ -1,17 +1,17 @@
 # 🏗️ 10 · Architecture
 
-## 📑 Table of Contents
+## Table of contents
 
-- [⚡ TL;DR](#-tldr)
-- [🔄 Pipeline Overview](#-pipeline-overview)
-- [🗂️ Repository File Map](#️-repository-file-map)
-- [📹 Output Directory Structure](#-output-directory-structure)
-- [🛠️ Dependencies](#️-dependencies)
-- [🗺️ Next Steps](#️-next-steps)
+- [TL;DR](#tldr)
+- [Pipeline overview](#pipeline-overview)
+- [Repository file map](#repository-file-map)
+- [Output directory structure](#output-directory-structure)
+- [Dependencies](#dependencies)
+- [Next steps](#next-steps)
 
 ---
 
-## ⚡ TL;DR
+## TL;DR
 
 - `eval_runner.py` → `PipelineOrchestrator` → [MetricsCollector, FailureModeClassifier, StateCoverageAnalyzer, CameraController] → `CheckpointSelector` → `ReportGenerator`
 - Isaac is invoked as a subprocess only. Observer code never imports Isaac directly.
@@ -19,7 +19,7 @@
 
 ---
 
-## 🔄 Pipeline Overview
+## Pipeline overview
 
 ```
 eval_runner.py
@@ -38,7 +38,7 @@ eval_runner.py
     └── 📄 ReportGenerator      eval_report.html
 ```
 
-### Component Roles
+### ── Component roles
 
 | Component | File | Role |
 |:---|:---|:---|
@@ -58,7 +58,7 @@ eval_runner.py
 
 ---
 
-## 🗂️ Repository File Map
+## Repository file map
 
 ```
 observer/
@@ -104,7 +104,7 @@ observer/
 
 ---
 
-## 📹 Output Directory Structure
+## Output directory structure
 
 After a run, outputs are written under `eval_results/`:
 
@@ -133,9 +133,9 @@ After a run, outputs are written under `eval_results/`:
 
 ---
 
-## 🛠️ Dependencies
+## Dependencies
 
-### Core (required)
+### ── Core (required)
 
 ```bash
 pip install numpy pyyaml matplotlib
@@ -143,7 +143,7 @@ sudo apt install ffmpeg          # video encoding
 pip install -e .                 # install the observer CLI
 ```
 
-### Optional
+### ── Optional
 
 ```bash
 # experiment tracking (either or both)
@@ -154,7 +154,7 @@ pip install tensorboard
 pip install opencv-python
 ```
 
-### Isaac (provided by Isaac Lab installation)
+### ── Isaac (provided by Isaac Lab installation)
 
 ```
 omni.isaac.lab
@@ -164,7 +164,7 @@ omni.kit.viewport.utility
 
 > ⚠️ When optional packages are absent, the corresponding feature is gracefully disabled. The rest of the pipeline continues normally.
 
-### Verify installation
+### ── Verify installation
 
 ```bash
 observer doctor   # validates config and dependencies
@@ -172,7 +172,7 @@ observer doctor   # validates config and dependencies
 
 ---
 
-## 🗺️ Next Steps
+## Next steps
 
 | Document | Content |
 |:---|:---|

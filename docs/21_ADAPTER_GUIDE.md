@@ -1,20 +1,20 @@
 # 🔧 21 · Writing a New Adapter
 
-## 📑 Table of Contents
+## Table of contents
 
-- [⚡ TL;DR](#-tldr)
-- [📋 Prerequisites](#-prerequisites)
-- [📌 Step 1 — Write eval.py](#-step-1--write-evalpy)
-- [📌 Step 2 — Write record.py (Optional)](#-step-2--write-recordpy-optional)
-- [📌 Step 3 — Extract the config stanza](#-step-3--extract-the-config-stanza)
-- [📌 Step 4 — Open an adapter doc PR](#-step-4--open-an-adapter-doc-pr)
-- [🔍 Worked Example — sharpa-rl-lab](#-worked-example--sharpa-rl-lab)
-- [🛠️ Troubleshooting](#️-troubleshooting)
-- [🗺️ Next Steps](#️-next-steps)
+- [TL;DR](#tldr)
+- [Prerequisites](#prerequisites)
+- [Step 1 — Write eval.py](#step-1--write-evalpy)
+- [Step 2 — Write record.py (optional)](#step-2--write-recordpy-optional)
+- [Step 3 — Extract the config stanza](#step-3--extract-the-config-stanza)
+- [Step 4 — Open an adapter doc PR](#step-4--open-an-adapter-doc-pr)
+- [Worked example — sharpa-rl-lab](#worked-example--sharpa-rl-lab)
+- [Troubleshooting](#troubleshooting)
+- [Next steps](#next-steps)
 
 ---
 
-## ⚡ TL;DR
+## TL;DR
 
 1. Add `eval.py` to your framework repo — outputs `metrics.json` + `episodes.json`
 2. (Optional) Add `record.py` — reads camera poses and saves video
@@ -23,7 +23,7 @@
 
 ---
 
-## 📋 Prerequisites
+## Prerequisites
 
 - Observer installed (`pip install -e .`)
 - Familiar with the integration contract: [`20_INTEGRATION_CONTRACT.md`](./20_INTEGRATION_CONTRACT.md)
@@ -34,11 +34,11 @@
 
 ---
 
-## 📌 Step 1 — Write eval.py
+## Step 1 — Write eval.py
 
 Add `eval.py` (or `scripts/eval.py`) to your framework repo.
 
-### Accept the required CLI flags
+### ── Accept the required CLI flags
 
 ```python
 import argparse
@@ -57,7 +57,7 @@ parser.add_argument("--headless", action="store_true")
 args, _ = parser.parse_known_args()   # silently ignore unknown flags
 ```
 
-### Write the outputs
+### ── Write the outputs
 
 Using `MetricsCollector` (recommended):
 
@@ -88,9 +88,9 @@ result = collector.aggregate(checkpoint_name=Path(args.load_path).stem)
 result.save(args.metrics_output, args.episodes_output)
 ```
 
-For the manual schema see [`20_INTEGRATION_CONTRACT.md §1`](./20_INTEGRATION_CONTRACT.md#-1-eval-script-contract).
+For the manual schema see [`20_INTEGRATION_CONTRACT.md §1`](./20_INTEGRATION_CONTRACT.md#1--eval-script-contract).
 
-### ✅ Verify
+### ── Verify
 
 ```bash
 python -m <your_pkg>.scripts.eval \
@@ -107,11 +107,11 @@ cat /tmp/ep.json | python -m json.tool | head -30
 
 ---
 
-## 📌 Step 2 — Write record.py (Optional)
+## Step 2 — Write record.py (optional)
 
 Skip this step if you don't need video. Set `skip_video: true` in your config.
 
-### Use the Observer utilities (recommended)
+### ── Use the Observer utilities (recommended)
 
 ```python
 import json
@@ -132,7 +132,7 @@ record_all_views(
 
 `CameraController` and `record_all_views` have no dependencies outside the Replicator module.
 
-### ✅ Verify
+### ── Verify
 
 ```bash
 python eval_runner.py --checkpoint <ckpt.pth> \
@@ -144,7 +144,7 @@ ls eval_results/*/videos/
 
 ---
 
-## 📌 Step 3 — Extract the config stanza
+## Step 3 — Extract the config stanza
 
 Prepare a YAML stanza to paste under `runtime:` in `observer/configs/eval_config.yaml`:
 
@@ -165,7 +165,7 @@ runtime:
 
 ---
 
-## 📌 Step 4 — Open an adapter doc PR
+## Step 4 — Open an adapter doc PR
 
 Write `observer/docs/adapters/<framework>.md` and open a PR.
 
@@ -181,7 +181,7 @@ Use [`docs/adapters/sharpa.md`](./adapters/sharpa.md) as a template.
 
 ---
 
-## 🔍 Worked Example — sharpa-rl-lab
+## Worked example — sharpa-rl-lab
 
 sharpa-rl-lab is a PPO / ProprioAdapt stack built on `DirectRLEnv` + `GymStyleEnvWrapper`.
 
@@ -192,7 +192,7 @@ sharpa-rl-lab is a PPO / ProprioAdapt stack built on `DirectRLEnv` + `GymStyleEn
 
 ---
 
-## 🛠️ Troubleshooting
+## Troubleshooting
 
 **`ModuleNotFoundError` when running `python -m <eval_module>`**
 
@@ -213,7 +213,7 @@ Check that `init_roll_deg` / `init_pitch_deg` / `init_yaw_deg` reflect the actua
 
 ---
 
-## 🗺️ Next Steps
+## Next steps
 
 | Document | Content |
 |:---|:---|
