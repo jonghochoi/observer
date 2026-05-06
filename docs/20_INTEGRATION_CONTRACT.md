@@ -64,7 +64,7 @@ Additional flags in `runtime.extra_eval_args` are forwarded as-is (e.g. grasp ca
 
 ### ── Required outputs
 
-#### ── `metrics.json`
+#### ▸ `metrics.json`
 
 Using `observer.pipeline.metrics_collector.MetricsCollector` produces the correct schema automatically. If writing manually:
 
@@ -92,7 +92,7 @@ Minimum fields (missing fields cause the corresponding analysis to be skipped):
 {"checkpoint": "...", "num_episodes": 50, "success_rate": 0.84}
 ```
 
-#### ── `episodes.json`
+#### ▸ `episodes.json`
 
 A JSON array of per-episode dicts. Each entry:
 
