@@ -225,7 +225,7 @@ def main(output_dir: Path, eval_config_path: Path) -> None:
 
     upload_eval(
         run_name=info["run_name"],
-        experiment=info.get("experiment"),
+        experiment_name=info.get("experiment_name"),
         tracking_uri=info.get("tracking_uri"),
         eval_dir=eval_root,
         metrics=metrics,
