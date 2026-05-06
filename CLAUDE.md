@@ -56,7 +56,7 @@ All files under `docs/` and `README.md` follow these rules (established in nexus
 
 ## Code formatting
 
-Target (observer has no `ruff.toml` today — document the target so future tooling is consistent):
+Target (configured in `pyproject.toml` under `[tool.ruff]`):
 
 ```
 line-length  = 100
@@ -64,7 +64,7 @@ indent-width = 4   # spaces, never tabs
 skip-magic-trailing-comma = true
 ```
 
-Formatting command (once ruff is added): `ruff format .`
+Formatting command: `ruff format .`
 
 ## Comment & docstring style
 
@@ -207,7 +207,7 @@ Derived from the nexus convention and observer's own commit history. Not vanilla
 ### ── New optional dependency
 
 - [ ] Use `try/except` + `_*_AVAILABLE` flag at module load — see `experiment_tracker.py` for the pattern
-- [ ] `requirements.txt` — add under a `# optional` comment
+- [ ] `pyproject.toml` — add under `[project.optional-dependencies]`
 - [ ] `doctor.py` — check and surface availability at startup if user-visible
 
 ### ── New subprocess CLI flag (eval/record contract)
