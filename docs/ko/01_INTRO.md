@@ -44,7 +44,7 @@
 | 2 | 🔍 **실패 모드 분류** | 6-class 규칙 체인, Isaac 의존 없음 |
 | 3 | 🗺️ **상태 커버리지 분석** | roll × pitch 성공 히트맵 |
 | 4 | 🎬 **다각도 비디오 기록** | 5 시점 + 2×3 그리드 mp4 |
-| 5 | 📡 **실험 트래킹** | W&B / TensorBoard 자동 감지 |
+| 5 | 📡 **실험 트래킹** | TensorBoard 자동 감지 |
 | 6 | 🏆 **다목적 랭킹** | 가중 점수: 성공률, slip, 에너지, 포즈 오차 |
 | 7 | 📄 **HTML 리포트** | 차트·파이·비디오·히트맵 포함 |
 
@@ -58,7 +58,7 @@
 | 🔍 **FailureModeClassifier** | 우선순위 규칙 체인으로 에피소드별 실패 유형 분류 (학습 데이터 불필요) |
 | 🗺️ **StateCoverageAnalyzer** | roll × pitch 초기 포즈 공간에서 어디가 약한지 히트맵 |
 | 🎬 **CameraController + VideoRecorder** | 5개 시점 + 2×3 그리드 비디오 저장 |
-| 📡 **ExperimentTracker** | W&B / TensorBoard 자동 감지 및 로깅 |
+| 📡 **ExperimentTracker** | TensorBoard 자동 감지 및 로깅 |
 | 🏆 **CheckpointSelector** | 다목적 가중치 점수로 top-k 체크포인트 선정 |
 | 📄 **ReportGenerator** | 차트·파이·비디오·히트맵이 포함된 self-contained HTML |
 | 🔄 **PipelineOrchestrator** | 체크포인트 1개당 위 단계들을 조율 |
@@ -79,7 +79,7 @@ observer/
 │   ├── metrics_collector.py    스텝별 지표 수집
 │   ├── failure_classifier.py   규칙 기반 실패 모드 분류
 │   ├── state_coverage.py       초기 포즈 커버리지 분석
-│   ├── experiment_tracker.py   W&B / TensorBoard 연동
+│   ├── experiment_tracker.py   TensorBoard 연동
 │   └── auto_select.py          다목적 점수 체크포인트 선정
 ├── isaac/
 │   ├── camera_controller.py    Isaac Sim 뷰포트 제어 (유틸)
@@ -106,7 +106,7 @@ pip install numpy pyyaml matplotlib
 sudo apt install ffmpeg
 
 # 3) 선택: 실험 트래킹
-pip install wandb tensorboard
+pip install tensorboard
 
 # 4) 선택: tactile 오버레이
 pip install opencv-python
@@ -144,9 +144,6 @@ python eval_runner.py --checkpoint_dir runs/ --recursive --latest_only
 python eval_runner.py --checkpoint_dir runs/ \
     --auto_select --select_weights hardware_safe --deploy_top_k 2
 
-# 비디오 생략 + W&B 로깅만
-python eval_runner.py --checkpoint_dir runs/ \
-    --skip_video --wandb_project my-project
 ```
 
 ### ── 실행 전 체크리스트

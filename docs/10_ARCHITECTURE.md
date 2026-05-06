@@ -24,7 +24,7 @@
 ```
 eval_runner.py
     │
-    ├── 📡 ExperimentTracker    W&B + TensorBoard (auto-detected)
+    ├── 📡 ExperimentTracker    TensorBoard (auto-detected)
     │
     ├── 🔄 PipelineOrchestrator (per checkpoint)
     │     ├── [1] 📦 MetricsCollector        → metrics.json
@@ -46,7 +46,7 @@ eval_runner.py
 | `MetricsCollector` | `pipeline/metrics_collector.py` | Collects and aggregates per-step episode metrics |
 | `FailureModeClassifier` | `pipeline/failure_classifier.py` | Classifies failure types via a priority rule chain |
 | `StateCoverageAnalyzer` | `pipeline/state_coverage.py` | Analyzes initial pose space coverage over roll × pitch |
-| `ExperimentTracker` | `pipeline/experiment_tracker.py` | Auto-detects and logs to W&B / TensorBoard |
+| `ExperimentTracker` | `pipeline/experiment_tracker.py` | Auto-detects and logs to TensorBoard |
 | `CheckpointSelector` | `pipeline/auto_select.py` | Selects top-k checkpoints via multi-objective scoring |
 | `CameraController` | `isaac/camera_controller.py` | Isaac Sim viewport control (utility library) |
 | `VideoRecorder` | `isaac/recorder.py` | Replicator-based video capture (utility library) |
@@ -74,7 +74,7 @@ observer/
 │   ├── 📦 metrics_collector.py    Per-step metric accumulator
 │   ├── 🔍 failure_classifier.py   Rule-based failure mode taxonomy
 │   ├── 🗺️ state_coverage.py       Initial pose coverage analysis
-│   ├── 📡 experiment_tracker.py   W&B / TensorBoard integration
+│   ├── 📡 experiment_tracker.py   TensorBoard integration
 │   └── 🏆 auto_select.py          Multi-objective checkpoint scoring
 ├── isaac/
 │   ├── 🎥 camera_controller.py    Isaac Sim viewport control (utility)
@@ -146,8 +146,7 @@ pip install -e .                 # install the observer CLI
 ### ── Optional
 
 ```bash
-# experiment tracking (either or both)
-pip install wandb
+# experiment tracking
 pip install tensorboard
 
 # tactile overlay

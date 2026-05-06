@@ -49,14 +49,10 @@ def parse_args():
                         help="Path to eval_config.yaml")
 
     # Experiment tracking
-    parser.add_argument("--wandb_project", type=str, default="observer-eval",
-                        help="W&B project name")
-    parser.add_argument("--wandb_run",     type=str, default=None,
-                        help="W&B run name (auto-generated if not specified)")
-    parser.add_argument("--tb_log_dir",    type=str, default="tb_logs",
+    parser.add_argument("--tb_log_dir",  type=str, default="tb_logs",
                         help="TensorBoard log directory")
-    parser.add_argument("--no_tracking",   action="store_true",
-                        help="Disable W&B / TensorBoard logging")
+    parser.add_argument("--no_tracking", action="store_true",
+                        help="Disable TensorBoard logging")
 
     # Auto checkpoint selection
     parser.add_argument("--auto_select",    action="store_true",
@@ -158,7 +154,7 @@ def main():
     log.info(obs_log(f"Output root : {output_root.resolve()}", "info"))
     log.info(obs_log(f"Dry-run     : {config.dry_run}", "info"))
     log.info(obs_log(
-        f"Tracking    : {'OFF' if args.no_tracking else 'ON (W&B/TB auto-detected)'}",
+        f"Tracking    : {'OFF' if args.no_tracking else 'ON (TensorBoard auto-detected)'}",
         "info"
     ))
     log.info(obs_log(
@@ -169,16 +165,7 @@ def main():
 
     # Experiment tracker
     tracker = ExperimentTracker(
-        project=args.wandb_project,
-        run_name=args.wandb_run,
         tb_log_dir=Path(args.tb_log_dir),
-        tags=[config.runtime.task, f"n_ckpt={len(checkpoints)}"],
-        config={
-            "task":       config.runtime.task,
-            "num_envs":   config.runtime.num_envs,
-            "n_episodes": config.metrics.num_eval_episodes,
-            "n_cameras":  len(config.cameras),
-        },
         enabled=not args.no_tracking and not config.dry_run,
     )
 

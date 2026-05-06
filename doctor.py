@@ -59,8 +59,7 @@ def check_core_deps() -> bool:
 
 
 def check_optional_deps() -> None:
-    for mod, hint in (("wandb",       "pip install wandb"),
-                      ("tensorboard", "pip install tensorboard"),
+    for mod, hint in (("tensorboard", "pip install tensorboard"),
                       ("cv2",         "pip install opencv-python")):
         label = "opencv-python" if mod == "cv2" else mod
         if importlib.util.find_spec(mod):

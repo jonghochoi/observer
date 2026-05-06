@@ -116,7 +116,7 @@ Works with PPO / RSL-RL / CleanRL / any framework. The only requirement is that 
 
 ### ── Optional deps pattern
 
-`wandb`, `tensorboard`, and `opencv-python` are optional. When absent, the corresponding feature degrades gracefully. `observer.pipeline.experiment_tracker` detects availability at runtime.
+`tensorboard` and `opencv-python` are optional. When absent, the corresponding feature degrades gracefully. `observer.pipeline.experiment_tracker` detects availability at runtime.
 
 ### ── Metric-key fallbacks
 
