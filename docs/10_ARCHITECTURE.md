@@ -50,7 +50,7 @@ eval_runner.py
 | `CheckpointSelector` | `pipeline/auto_select.py` | Selects top-k checkpoints via multi-objective scoring |
 | `CameraController` | `isaac/camera_controller.py` | Isaac Sim viewport control (utility library) |
 | `VideoRecorder` | `isaac/recorder.py` | Replicator-based video capture (utility library) |
-| `ReportGenerator` | `report/report_generator.py` | Generates a self-contained HTML report |
+| `ReportGenerator` | `pipeline/report_generator.py` | Generates a self-contained HTML report |
 
 > [!IMPORTANT]
 > `CameraController` and `VideoRecorder` are **utility libraries**. Observer does not call them directly —
@@ -75,14 +75,14 @@ observer/
 │   ├── 🔍 failure_classifier.py   Rule-based failure mode taxonomy
 │   ├── 🗺️ state_coverage.py       Initial pose coverage analysis
 │   ├── 📡 experiment_tracker.py   TensorBoard integration
-│   └── 🏆 auto_select.py          Multi-objective checkpoint scoring
+│   ├── 🏆 auto_select.py          Multi-objective checkpoint scoring
+│   ├── 📄 report_generator.py     HTML report generator
+│   └── 🔎 result_locator.py       Output layout discovery for glue scripts
 ├── isaac/
 │   ├── 🎥 camera_controller.py    Isaac Sim viewport control (utility)
 │   └── 🎬 recorder.py             Replicator-based video capture (utility)
-├── report/
-│   └── 📄 report_generator.py     HTML report generator
-├── tactile/
-│   └── 👆 overlay.py              Deform map video overlay
+├── viz/
+│   └── 👆 tactile_overlay.py      Deform map video overlay
 └── docs/
     ├── 00_PRINCIPLES.md
     ├── 10_ARCHITECTURE.md          ← you are here

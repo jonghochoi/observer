@@ -174,7 +174,7 @@ Derived from the nexus convention and observer's own commit history. Not vanilla
 
 - [ ] `pipeline/metrics_collector.py` — add field to `EpisodeStats` and aggregation logic
 - [ ] `pipeline/auto_select.py` — add key to scoring; add alias fallbacks for backward compat
-- [ ] `report/report_generator.py` — add rendering for the new metric
+- [ ] `pipeline/report_generator.py` — add rendering for the new metric
 - [ ] `docs/20_INTEGRATION_CONTRACT.md` — update `metrics.json` schema table
 - [ ] `docs/30_METRICS_REFERENCE.md` — add row to the metrics table + interpretation
 
@@ -219,7 +219,7 @@ Derived from the nexus convention and observer's own commit history. Not vanilla
 
 Items where multiple files must stay in lockstep — changing one without the others is a bug:
 
-**Metric-key fallbacks** — `pipeline/auto_select.py` and `report/report_generator.py` both
+**Metric-key fallbacks** — `pipeline/auto_select.py` and `pipeline/report_generator.py` both
 implement alias lookups (e.g. `energy_J_mean` ∨ `energy_J_per_episode`). Adding or removing an
 alias in one file must be reflected in the other in the **same commit**.
 

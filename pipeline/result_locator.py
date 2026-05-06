@@ -1,6 +1,6 @@
 """
-observer/io/result_locator.py
-=============================
+observer/pipeline/result_locator.py
+====================================
 Discover the on-disk layout produced by ``PipelineOrchestrator.run_single``.
 
 This module exists so callers (e.g. a post-training "evaluate + upload"
