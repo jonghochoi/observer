@@ -14,7 +14,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-tracking = ["wandb", "tensorboard"]
+tracking = ["tensorboard"]
 tactile  = ["opencv-python"]
 
 [project.scripts]
