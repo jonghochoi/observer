@@ -18,10 +18,11 @@ tracking = ["tensorboard"]
 tactile  = ["opencv-python"]
 
 [project.scripts]
-observer = "eval_runner:main"
+observer = "observer.eval_runner:main"
 
 [tool.setuptools.packages.find]
-where = ["."]
+where = [".."]
+include = ["observer*"]
 namespaces = true
 
 [tool.ruff]

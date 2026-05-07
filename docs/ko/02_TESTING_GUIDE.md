@@ -48,6 +48,9 @@ bash setup.sh --venv
 source ~/.observer/activate.sh
 ```
 
+> 💡 이미 `setup.sh --venv`로 설치한 적 있다면 `pyproject.toml` 변경 사항을
+> 반영하기 위해 venv를 활성화한 뒤 `pip install -e .`을 한 번 더 실행해야 한다.
+
 `--alias` 옵션을 추가하면 `~/.bashrc`에 `observer-activate` 단축어가 등록된다:
 
 ```bash
