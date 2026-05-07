@@ -1,14 +1,17 @@
 """
-eval_runner.py
-==============
+observer/eval_runner.py
+=======================
 OBSERVER — entry point for the checkpoint evaluation pipeline.
 
-Usage:
+Usage (after ``pip install -e .``):
     observer doctor                                              # pre-flight check
-    python eval_runner.py --checkpoint runs/exp_001/model_5000.pth
-    python eval_runner.py --checkpoint_dir runs/exp_001/
-    python eval_runner.py --checkpoint_dir runs/ --recursive --latest_only
-    python eval_runner.py --checkpoint_dir runs/ --auto_select --select_weights hardware_safe
+    observer --checkpoint runs/exp_001/model_5000.pth
+    observer --checkpoint_dir runs/exp_001/
+    observer --checkpoint_dir runs/ --recursive --latest_only
+    observer --checkpoint_dir runs/ --auto_select --select_weights hardware_safe
+
+Without installing, run as a module:
+    python -m observer.eval_runner --checkpoint runs/exp_001/model_5000.pth
 """
 
 import argparse
@@ -43,9 +46,9 @@ def parse_args():
     parser.add_argument("--latest_only",  action="store_true",
                         help="Evaluate only the most recent checkpoint per directory")
 
-    # Config
+    # Config — file-relative default so it works regardless of cwd
     parser.add_argument("--config", type=str,
-                        default="observer/configs/eval_config.yaml",
+                        default=str(Path(__file__).parent / "configs" / "eval_config.yaml"),
                         help="Path to eval_config.yaml")
 
     # Experiment tracking

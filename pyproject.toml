@@ -21,9 +21,8 @@ tactile  = ["opencv-python"]
 observer = "observer.eval_runner:main"
 
 [tool.setuptools.packages.find]
-where = [".."]
+where = ["."]
 include = ["observer*"]
-namespaces = true
 
 [tool.ruff]
 line-length = 100
