@@ -9,15 +9,15 @@ This file only documents the rules those two don't make explicit.
 ## Non-obvious conventions
 
 - **Subprocess-only boundary.** The orchestrator never imports the user's RL stack, torch, or Isaac. Only files under `isaac/` may `import omni.*`, and even those degrade to mock mode when the import fails. If you're adding a torch/env/Isaac import outside `isaac/`, you're violating the design.
-- **`docs/20_INTEGRATION_CONTRACT.md` ↔ orchestrator CLIs must stay in sync.** The two subprocess command shapes live in `pipeline/orchestrator.py` (`_build_metrics_cmd`, `_build_record_cmd`). Any change to either must update `20_INTEGRATION_CONTRACT.md` in the same commit — adapter authors rely on it.
+- **`docs/20_INTEGRATION_CONTRACT.md` ↔ orchestrator CLIs must stay in sync.** The two subprocess command shapes live in `observer/pipeline/orchestrator.py` (`_build_metrics_cmd`, `_build_record_cmd`). Any change to either must update `20_INTEGRATION_CONTRACT.md` in the same commit — adapter authors rely on it.
 - **Preserve metric-key fallbacks.** `auto_select.py` and `report_generator.py` accept aliases (e.g. `energy_J_mean` ∨ `energy_J_per_episode`, `object_pos_error_mm_mean` ∨ `object_pose_error_mm`) so older user scripts keep working. Don't collapse them when refactoring.
-- **Optional deps go through `try/except` + `_*_AVAILABLE` flags** at module load (see `experiment_tracker.py`, `state_coverage.py`, `isaac/recorder.py`). Follow that pattern for new optional integrations rather than hard-importing.
+- **Optional deps go through `try/except` + `_*_AVAILABLE` flags** at module load (see `observer/pipeline/experiment_tracker.py`, `observer/pipeline/state_coverage.py`, `observer/isaac/recorder.py`). Follow that pattern for new optional integrations rather than hard-importing.
 - **Framework-specific knobs belong in `runtime.extra_eval_args` / `extra_record_args`**, forwarded verbatim to the subprocess. Don't add framework-specific fields to `RuntimeConfig` or the orchestrator.
 - **`brand.py`** is the single source for ANSI styling and the banner. Don't sprinkle ANSI codes elsewhere.
 
 ## Things that surprise people
 
-- No `__init__.py` anywhere — relies on PEP 420 namespace packages. `eval_runner.py` lives at the repo *root*, not under `observer/`, but imports use `observer.*`. Run via the installed `observer` console script (`pip install -e .`) or from the repo's parent directory.
+- The Python code lives under a wrapper `observer/` subdirectory (`observer/observer/eval_runner.py`, `observer/observer/pipeline/...`, etc.) so the package is discovered via `PYTHONPATH=<repo_root>` symmetrically with peer libraries (e.g. nexus's `nexus/nexus/...`). Invoke via the `observer` console script after `pip install -e .`, or as `python -m observer.eval_runner`.
 - `--dry_run` is the closest thing to a test suite: it skips the metrics/record subprocesses and feeds `_dummy_metrics()` through the rest of the pipeline. Use it to exercise report/ranking/tracker code paths offline.
 - One failed checkpoint never aborts a sweep — `_run_subprocess` errors are caught in `run_single` and recorded on `CheckpointResult.error_msg`.
 
@@ -72,7 +72,7 @@ Every Python module starts with a docstring using the unicode banner format:
 
 ```python
 """
-observer/pipeline/metrics_collector.py
+observer/observer/pipeline/metrics_collector.py
 ======================================
 Aggregates per-step episode data into the metrics.json schema.
 """
@@ -153,7 +153,7 @@ Derived from the nexus convention and observer's own commit history. Not vanilla
 2. Wrap at ~72 columns. URLs and code blocks may exceed.
 3. **Lead with the *why*** — one short paragraph stating problem/motivation before listing the *what*.
 4. Lists: `-` bullets for parallel changes, `1.` `2.` for sequenced items.
-5. Per-file groupings for larger commits: `pipeline/orchestrator.py:` on its own line, then indented bullets.
+5. Per-file groupings for larger commits: `observer/pipeline/orchestrator.py:` on its own line, then indented bullets.
 6. Unicode dividers for large commits (`feat`/`refactor` touching many files):
    ```
    ── 1. Anchor text mismatches ───────────────────────────────────────────
@@ -172,15 +172,15 @@ Derived from the nexus convention and observer's own commit history. Not vanilla
 
 ### ── New metric
 
-- [ ] `pipeline/metrics_collector.py` — add field to `EpisodeStats` and aggregation logic
-- [ ] `pipeline/auto_select.py` — add key to scoring; add alias fallbacks for backward compat
-- [ ] `pipeline/report_generator.py` — add rendering for the new metric
+- [ ] `observer/pipeline/metrics_collector.py` — add field to `EpisodeStats` and aggregation logic
+- [ ] `observer/pipeline/auto_select.py` — add key to scoring; add alias fallbacks for backward compat
+- [ ] `observer/pipeline/report_generator.py` — add rendering for the new metric
 - [ ] `docs/20_INTEGRATION_CONTRACT.md` — update `metrics.json` schema table
 - [ ] `docs/30_METRICS_REFERENCE.md` — add row to the metrics table + interpretation
 
 ### ── New failure mode
 
-- [ ] `pipeline/failure_classifier.py` — insert rule at the correct priority in the chain
+- [ ] `observer/pipeline/failure_classifier.py` — insert rule at the correct priority in the chain
 - [ ] `docs/30_METRICS_REFERENCE.md` — add row to the taxonomy table; update priority numbers
 - [ ] `docs/31_CHECKPOINT_RANKING.md` — consider whether ranking weights need to account for it
 
@@ -192,8 +192,8 @@ Derived from the nexus convention and observer's own commit history. Not vanilla
 
 ### ── New runtime config field
 
-- [ ] `configs/eval_config.py` — add field to the dataclass
-- [ ] `configs/eval_config.yaml` — add the key (commented out if optional)
+- [ ] `observer/configs/eval_config.py` — add field to the dataclass
+- [ ] `observer/configs/eval_config.yaml` — add the key (commented out if optional)
 - [ ] `doctor.py` — add validation if the field is user-supplied
 - [ ] `README.md` → "Quick start" — update example config stanza if user-facing
 - [ ] `docs/20_INTEGRATION_CONTRACT.md` — update if the field is forwarded to a subprocess
@@ -212,18 +212,18 @@ Derived from the nexus convention and observer's own commit history. Not vanilla
 
 ### ── New subprocess CLI flag (eval/record contract)
 
-- [ ] `pipeline/orchestrator.py` — `_build_metrics_cmd` and/or `_build_record_cmd`
+- [ ] `observer/pipeline/orchestrator.py` — `_build_metrics_cmd` and/or `_build_record_cmd`
 - [ ] `docs/20_INTEGRATION_CONTRACT.md` — **same commit** — adapter authors depend on this being current
 
 ## Cross-cutting conventions
 
 Items where multiple files must stay in lockstep — changing one without the others is a bug:
 
-**Metric-key fallbacks** — `pipeline/auto_select.py` and `pipeline/report_generator.py` both
+**Metric-key fallbacks** — `observer/pipeline/auto_select.py` and `observer/pipeline/report_generator.py` both
 implement alias lookups (e.g. `energy_J_mean` ∨ `energy_J_per_episode`). Adding or removing an
 alias in one file must be reflected in the other in the **same commit**.
 
-**Subprocess CLI contract** — `pipeline/orchestrator.py` (`_build_metrics_cmd`, `_build_record_cmd`)
+**Subprocess CLI contract** — `observer/pipeline/orchestrator.py` (`_build_metrics_cmd`, `_build_record_cmd`)
 and `docs/20_INTEGRATION_CONTRACT.md` are the two authoritative sources for the subprocess command
 shape. Change them together, never separately.
 

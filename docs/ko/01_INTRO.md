@@ -68,31 +68,41 @@
 ## 3. 폴더/파일 구조
 
 ```
-observer/
-├── eval_runner.py              진입점 (설치 시 `observer` CLI로 노출)
-├── brand.py                    콘솔 배너/브랜딩
-├── configs/
-│   ├── eval_config.py          Config 데이터클래스
-│   └── eval_config.yaml        ← 실험마다 편집할 파일
-├── pipeline/
-│   ├── orchestrator.py         체크포인트 단위 조율자
-│   ├── metrics_collector.py    스텝별 지표 수집
-│   ├── failure_classifier.py   규칙 기반 실패 모드 분류
-│   ├── state_coverage.py       초기 포즈 커버리지 분석
-│   ├── experiment_tracker.py   TensorBoard 연동
-│   └── auto_select.py          다목적 점수 체크포인트 선정
-├── isaac/
-│   ├── camera_controller.py    Isaac Sim 뷰포트 제어 (유틸)
-│   └── recorder.py             Replicator 기반 비디오 캡처 (유틸)
+observer/                            ← 리포지토리 루트 (메타데이터만)
+├── pyproject.toml                   패키지 메타데이터, 의존성, 콘솔 스크립트 엔트리
+├── setup.sh                         venv 부트스트랩 (선택)
+├── Makefile                         자주 쓰는 타겟 (doctor, eval, sweep)
+├── observer/                        ← Python 패키지 (PYTHONPATH=<repo_root>)
+│   ├── eval_runner.py               진입점 (`observer` CLI / `python -m observer.eval_runner`)
+│   ├── brand.py                     콘솔 배너/브랜딩
+│   ├── doctor.py                    사전 환경 검증
+│   ├── configs/
+│   │   ├── eval_config.py           Config 데이터클래스
+│   │   └── eval_config.yaml         ← 실험마다 편집할 파일
+│   ├── pipeline/
+│   │   ├── orchestrator.py          체크포인트 단위 조율자
+│   │   ├── metrics_collector.py     스텝별 지표 수집
+│   │   ├── failure_classifier.py    규칙 기반 실패 모드 분류
+│   │   ├── state_coverage.py        초기 포즈 커버리지 분석
+│   │   ├── experiment_tracker.py    TensorBoard 연동
+│   │   ├── auto_select.py           다목적 점수 체크포인트 선정
+│   │   ├── report_generator.py      HTML 리포트 생성
+│   │   └── result_locator.py        외부 글루 스크립트용 출력 경로 탐색
+│   ├── isaac/
+│   │   ├── camera_controller.py     Isaac Sim 뷰포트 제어 (유틸)
+│   │   └── recorder.py              Replicator 기반 비디오 캡처 (유틸)
+│   └── viz/
+│       └── tactile_overlay.py       Deform 맵 비디오 오버레이
 └── docs/
-    ├── 20_INTEGRATION_CONTRACT.md  ← 프레임워크 붙일 때 핵심
-    └── adapters/sharpa.md          ← sharpa-rl-lab 예시
+    ├── 20_INTEGRATION_CONTRACT.md   ← 프레임워크 붙일 때 핵심
+    ├── 22_EXTERNAL_LOGGER_HANDOFF.md ← 외부 logger(MLflow/W&B 등)와 연동할 때
+    └── adapters/sharpa.md           ← sharpa-rl-lab 예시
 ```
 
 > 📌 **자주 보게 될 파일 TOP 3**
-> 1. `configs/eval_config.yaml` — 실험마다 값 바꿔가며 작업
+> 1. `observer/configs/eval_config.yaml` — 실험마다 값 바꿔가며 작업
 > 2. `docs/20_INTEGRATION_CONTRACT.md` — 본인 프레임워크 붙일 때 이 계약만 맞추면 됨
-> 3. `eval_runner.py` — CLI 플래그 확인
+> 3. `observer/eval_runner.py` — CLI 플래그 확인
 
 ---
 
@@ -129,26 +139,26 @@ observer doctor
 
 ```bash
 # 파이프라인 구조만 검증 (Isaac 실행 X)
-python eval_runner.py --checkpoint_dir runs/ --dry_run
+observer --checkpoint_dir runs/ --dry_run
 
 # 단일 체크포인트
-python eval_runner.py --checkpoint runs/exp_001/model_5000.pth
+observer --checkpoint runs/exp_001/model_5000.pth
 
 # 디렉토리 전체 스윕
-python eval_runner.py --checkpoint_dir runs/exp_001/
+observer --checkpoint_dir runs/exp_001/
 
 # 여러 실험 재귀 + 최신 체크포인트만
-python eval_runner.py --checkpoint_dir runs/ --recursive --latest_only
+observer --checkpoint_dir runs/ --recursive --latest_only
 
 # 하드웨어 안전 우선 랭킹 + top-2 배포
-python eval_runner.py --checkpoint_dir runs/ \
+observer --checkpoint_dir runs/ \
     --auto_select --select_weights hardware_safe --deploy_top_k 2
 
 ```
 
 ### ── 실행 전 체크리스트
 
-- [ ] `configs/eval_config.yaml`의 `runtime.task` / `runtime.eval_module` / `runtime.record_script` 설정
+- [ ] `observer/configs/eval_config.yaml`의 `runtime.task` / `runtime.eval_module` / `runtime.record_script` 설정
   (sharpa-rl-lab 사용자: `docs/adapters/sharpa.md` 참고)
 - [ ] `runtime.isaac_lab_path`가 본인 환경에 맞게 설정
 - [ ] eval 스크립트가 `docs/20_INTEGRATION_CONTRACT.md`의 `episodes.json` 스키마 만족
@@ -216,7 +226,7 @@ eval_results/
 → Xvfb로 가상 디스플레이 띄우기:
 ```bash
 Xvfb :99 -screen 0 1920x1080x24 &
-DISPLAY=:99 python eval_runner.py --checkpoint_dir runs/
+DISPLAY=:99 observer --checkpoint_dir runs/
 ```
 
 **정책 로딩 실패**

@@ -13,7 +13,7 @@
 
 ## TL;DR
 
-- `eval_runner.py` → `PipelineOrchestrator` → [MetricsCollector, FailureModeClassifier, StateCoverageAnalyzer, CameraController] → `CheckpointSelector` → `ReportGenerator`
+- `observer.eval_runner` → `PipelineOrchestrator` → [MetricsCollector, FailureModeClassifier, StateCoverageAnalyzer, CameraController] → `CheckpointSelector` → `ReportGenerator`
 - Isaac is invoked as a subprocess only. Observer code never imports Isaac directly.
 - Outputs are written under `eval_results/` in a per-checkpoint directory.
 
@@ -22,7 +22,7 @@
 ## Pipeline overview
 
 ```
-eval_runner.py
+observer.eval_runner
     │
     ├── 📡 ExperimentTracker    TensorBoard (auto-detected)
     │
@@ -42,15 +42,15 @@ eval_runner.py
 
 | Component | File | Role |
 |:---|:---|:---|
-| `PipelineOrchestrator` | `pipeline/orchestrator.py` | Coordinates the full per-checkpoint cycle |
-| `MetricsCollector` | `pipeline/metrics_collector.py` | Collects and aggregates per-step episode metrics |
-| `FailureModeClassifier` | `pipeline/failure_classifier.py` | Classifies failure types via a priority rule chain |
-| `StateCoverageAnalyzer` | `pipeline/state_coverage.py` | Analyzes initial pose space coverage over roll × pitch |
-| `ExperimentTracker` | `pipeline/experiment_tracker.py` | Auto-detects and logs to TensorBoard |
-| `CheckpointSelector` | `pipeline/auto_select.py` | Selects top-k checkpoints via multi-objective scoring |
-| `CameraController` | `isaac/camera_controller.py` | Isaac Sim viewport control (utility library) |
-| `VideoRecorder` | `isaac/recorder.py` | Replicator-based video capture (utility library) |
-| `ReportGenerator` | `pipeline/report_generator.py` | Generates a self-contained HTML report |
+| `PipelineOrchestrator` | `observer/pipeline/orchestrator.py` | Coordinates the full per-checkpoint cycle |
+| `MetricsCollector` | `observer/pipeline/metrics_collector.py` | Collects and aggregates per-step episode metrics |
+| `FailureModeClassifier` | `observer/pipeline/failure_classifier.py` | Classifies failure types via a priority rule chain |
+| `StateCoverageAnalyzer` | `observer/pipeline/state_coverage.py` | Analyzes initial pose space coverage over roll × pitch |
+| `ExperimentTracker` | `observer/pipeline/experiment_tracker.py` | Auto-detects and logs to TensorBoard |
+| `CheckpointSelector` | `observer/pipeline/auto_select.py` | Selects top-k checkpoints via multi-objective scoring |
+| `CameraController` | `observer/isaac/camera_controller.py` | Isaac Sim viewport control (utility library) |
+| `VideoRecorder` | `observer/isaac/recorder.py` | Replicator-based video capture (utility library) |
+| `ReportGenerator` | `observer/pipeline/report_generator.py` | Generates a self-contained HTML report |
 
 > [!IMPORTANT]
 > `CameraController` and `VideoRecorder` are **utility libraries**. Observer does not call them directly —
@@ -61,33 +61,37 @@ eval_runner.py
 ## Repository file map
 
 ```
-observer/
-├── 🚀 eval_runner.py              Entry point (exposed as `observer` CLI after install)
-├── 🎨 brand.py                    Console banner / branding
-├── 📦 requirements.txt            Core runtime dependencies
-├── 🏗️ setup.py                    Package install script
-├── configs/
-│   ├── 📝 eval_config.py          Config dataclass
-│   └── ⚙️ eval_config.yaml        ← Edit this per experiment
-├── pipeline/
-│   ├── 🔄 orchestrator.py         Per-checkpoint cycle coordinator
-│   ├── 📦 metrics_collector.py    Per-step metric accumulator
-│   ├── 🔍 failure_classifier.py   Rule-based failure mode taxonomy
-│   ├── 🗺️ state_coverage.py       Initial pose coverage analysis
-│   ├── 📡 experiment_tracker.py   TensorBoard integration
-│   ├── 🏆 auto_select.py          Multi-objective checkpoint scoring
-│   ├── 📄 report_generator.py     HTML report generator
-│   └── 🔎 result_locator.py       Output layout discovery for glue scripts
-├── isaac/
-│   ├── 🎥 camera_controller.py    Isaac Sim viewport control (utility)
-│   └── 🎬 recorder.py             Replicator-based video capture (utility)
-├── viz/
-│   └── 👆 tactile_overlay.py      Deform map video overlay
+observer/                            ← repository root (metadata only)
+├── 📜 pyproject.toml                Package metadata, deps, console script entry
+├── 🛠️ setup.sh                      Optional venv bootstrap helper
+├── 🛠️ Makefile                      Convenience targets (doctor, eval, sweep)
+├── observer/                        ← Python package — discovered via PYTHONPATH=<repo_root>
+│   ├── 🚀 eval_runner.py            Entry point (`observer` CLI / `python -m observer.eval_runner`)
+│   ├── 🎨 brand.py                  Console banner / branding
+│   ├── 🩺 doctor.py                 Pre-flight environment validator
+│   ├── configs/
+│   │   ├── 📝 eval_config.py        Config dataclass
+│   │   └── ⚙️ eval_config.yaml      ← Edit this per experiment
+│   ├── pipeline/
+│   │   ├── 🔄 orchestrator.py       Per-checkpoint cycle coordinator
+│   │   ├── 📦 metrics_collector.py  Per-step metric accumulator
+│   │   ├── 🔍 failure_classifier.py Rule-based failure mode taxonomy
+│   │   ├── 🗺️ state_coverage.py     Initial pose coverage analysis
+│   │   ├── 📡 experiment_tracker.py TensorBoard integration
+│   │   ├── 🏆 auto_select.py        Multi-objective checkpoint scoring
+│   │   ├── 📄 report_generator.py   HTML report generator
+│   │   └── 🔎 result_locator.py     Output layout discovery for glue scripts
+│   ├── isaac/
+│   │   ├── 🎥 camera_controller.py  Isaac Sim viewport control (utility)
+│   │   └── 🎬 recorder.py           Replicator-based video capture (utility)
+│   └── viz/
+│       └── 👆 tactile_overlay.py    Deform map video overlay
 └── docs/
     ├── 00_PRINCIPLES.md
-    ├── 10_ARCHITECTURE.md          ← you are here
+    ├── 10_ARCHITECTURE.md           ← you are here
     ├── 20_INTEGRATION_CONTRACT.md
     ├── 21_ADAPTER_GUIDE.md
+    ├── 22_EXTERNAL_LOGGER_HANDOFF.md
     ├── 30_METRICS_REFERENCE.md
     ├── 31_CHECKPOINT_RANKING.md
     ├── adapters/
@@ -98,9 +102,9 @@ observer/
 ```
 
 > 💡 **Top 3 files you'll visit most**
-> 1. `configs/eval_config.yaml` — edit per experiment
+> 1. `observer/configs/eval_config.yaml` — edit per experiment
 > 2. `docs/20_INTEGRATION_CONTRACT.md` — the only contract your framework needs to satisfy
-> 3. `eval_runner.py` — CLI flag reference
+> 3. `observer/eval_runner.py` — CLI flag reference
 
 ---
 

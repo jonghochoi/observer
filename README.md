@@ -14,9 +14,15 @@
 [![Isaac Lab](https://img.shields.io/badge/Isaac%20Lab-2.x-76B900?logo=nvidia&logoColor=white)](https://isaac-sim.github.io/IsaacLab/)
 [![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 
-🇰🇷 Korean onboarding: [`docs/ko/01_INTRO.md`](docs/ko/01_INTRO.md)
-
 </div>
+
+---
+
+> ### 📖 New here? Read this first.
+>
+> Every team-agreed rule and engineering invariant lives on **one page**: [`docs/00_PRINCIPLES.md`](docs/00_PRINCIPLES.md) — *5 min, English*.
+>
+> 한글 온보딩 트랙은 [`docs/ko/`](docs/ko/)에서 시작하세요.
 
 ---
 
@@ -26,8 +32,6 @@ Dexterous manipulation research generates checkpoints far faster than humans can
 `success_rate = 0.91` looks great — but it may hide 3 slips/episode, 5× energy usage, and joint velocity spikes.
 Manual review always introduces selection, recency, and fatigue bias.
 
-> 📖 Background and design principles: [`docs/00_PRINCIPLES.md`](docs/00_PRINCIPLES.md)
-
 ---
 
 ## What this pipeline does
@@ -35,7 +39,7 @@ Manual review always introduces selection, recency, and fatigue bias.
 **One command. Everything automated.**
 
 ```bash
-python eval_runner.py --checkpoint_dir runs/ --recursive \
+observer --checkpoint_dir runs/ --recursive \
     --auto_select --select_weights hardware_safe
 ```
 
@@ -62,12 +66,12 @@ pip install -e .
 observer doctor
 
 # 3) Run
-python eval_runner.py --checkpoint runs/exp_001/model_5000.pth        # single
-python eval_runner.py --checkpoint_dir runs/exp_001/                   # directory
-python eval_runner.py --checkpoint_dir runs/ --recursive --latest_only # recursive
-python eval_runner.py --checkpoint_dir runs/ \
-    --auto_select --select_weights hardware_safe --deploy_top_k 2      # ranking + deploy
-python eval_runner.py --checkpoint_dir runs/ --dry_run                 # validation only
+observer --checkpoint runs/exp_001/model_5000.pth         # single
+observer --checkpoint_dir runs/exp_001/                   # directory
+observer --checkpoint_dir runs/ --recursive --latest_only # recursive
+observer --checkpoint_dir runs/ \                         # ranking + deploy
+    --auto_select --select_weights hardware_safe --deploy_top_k 2      
+observer --checkpoint_dir runs/ --dry_run                 # validation only
 ```
 
 > **First time?** Run `./scripts/setup.sh` to check prerequisites,
@@ -77,7 +81,7 @@ Observer is **framework-agnostic**. It runs your eval/record scripts as subproce
 as long as those scripts satisfy the contract in [`docs/20_INTEGRATION_CONTRACT.md`](docs/20_INTEGRATION_CONTRACT.md).
 
 ```yaml
-# configs/eval_config.yaml
+# observer/configs/eval_config.yaml
 runtime:
   task: "<your-task-id>"
   eval_module: "your_pkg.scripts.eval"
@@ -90,7 +94,7 @@ runtime:
 ## Architecture
 
 ```
-eval_runner.py
+observer.eval_runner
     ├── PipelineOrchestrator (per checkpoint)
     │     ├── MetricsCollector  → metrics.json
     │     ├── FailureModeClassifier
@@ -112,15 +116,8 @@ eval_runner.py
 | [`docs/10_ARCHITECTURE.md`](docs/10_ARCHITECTURE.md) | Engineers | System structure, file map, dependencies |
 | [`docs/20_INTEGRATION_CONTRACT.md`](docs/20_INTEGRATION_CONTRACT.md) | Developers | eval/record script contract |
 | [`docs/21_ADAPTER_GUIDE.md`](docs/21_ADAPTER_GUIDE.md) | Developers | Writing a new framework adapter |
+| [`docs/22_EXTERNAL_LOGGER_HANDOFF.md`](docs/22_EXTERNAL_LOGGER_HANDOFF.md) | Developers | Forwarding observer outputs to a downstream logger (MLflow, W&B, etc.) via `result_locator` |
 | [`docs/30_METRICS_REFERENCE.md`](docs/30_METRICS_REFERENCE.md) | Everyone | 8 metrics + 6-class failure classification |
 | [`docs/31_CHECKPOINT_RANKING.md`](docs/31_CHECKPOINT_RANKING.md) | Everyone | Multi-objective ranking + state coverage |
 | [`docs/adapters/sharpa.md`](docs/adapters/sharpa.md) | sharpa users | sharpa-rl-lab integration example |
 | [`docs/ko/01_INTRO.md`](docs/ko/01_INTRO.md) | 🇰🇷 Team members | Full Korean onboarding |
-
----
-
-<div align="center">
-
-*Built for high-DOF dexterous manipulation · Isaac Lab / Isaac Sim · GPU-parallel RL*
-
-</div>
