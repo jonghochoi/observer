@@ -36,20 +36,38 @@ brew install ffmpeg              # macOS
 
 ## Step 1 — 설치
 
+### ── 방법 A: setup.sh 사용 (권장 — 격리 venv 자동 생성)
+
 ```bash
-# 1-A. 레포 루트로 이동 (observer/ 디렉터리 안이 아니라 상위 디렉터리에서)
 cd /path/to/observer             # 레포 루트
 
-# 1-B. 핵심 의존성
-pip install numpy pyyaml matplotlib
+# 격리된 venv를 ~/.observer/venv 에 생성하고 observer 설치
+bash setup.sh --venv
 
-# 1-C. observer CLI 설치 (편집 가능 모드)
+# 이후 매 세션마다 활성화
+source ~/.observer/activate.sh
+```
+
+`--alias` 옵션을 추가하면 `~/.bashrc`에 `observer-activate` 단축어가 등록된다:
+
+```bash
+bash setup.sh --venv --alias
+# 이후: observer-activate
+```
+
+### ── 방법 B: 직접 설치 (기존 환경 / Docker / CI)
+
+```bash
+cd /path/to/observer             # 레포 루트
+
+# numpy, pyyaml, matplotlib은 pyproject.toml에 선언돼 있어
+# pip install -e . 한 번으로 함께 설치된다
 pip install -e .
 
-# 1-D. 선택: 실험 트래킹
+# 선택: 실험 트래킹
 pip install tensorboard
 
-# 1-E. 선택: tactile 오버레이 (opencv)
+# 선택: tactile 오버레이
 pip install opencv-python
 ```
 
