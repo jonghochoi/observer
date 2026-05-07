@@ -147,14 +147,10 @@ else
     warn "ISAACLAB_PATH not set — needed only when video recording is on"
 fi
 
-if python3 -c 'import wandb' 2>/dev/null; then
-    if [ -f "${HOME}/.netrc" ] && grep -q 'machine api.wandb.ai' "${HOME}/.netrc"; then
-        ok "wandb logged in"
-    else
-        warn "wandb installed but not logged in — run: wandb login"
-    fi
+if python3 -c 'import tensorboard' 2>/dev/null; then
+    ok "tensorboard installed"
 else
-    warn "wandb not installed — pip install wandb (optional)"
+    warn "tensorboard not installed — pip install tensorboard (optional)"
 fi
 
 echo ""
