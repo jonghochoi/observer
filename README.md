@@ -120,4 +120,5 @@ observer.eval_runner
 | [`docs/30_METRICS_REFERENCE.md`](docs/30_METRICS_REFERENCE.md) | Everyone | 8 metrics + 6-class failure classification |
 | [`docs/31_CHECKPOINT_RANKING.md`](docs/31_CHECKPOINT_RANKING.md) | Everyone | Multi-objective ranking + state coverage |
 | [`docs/adapters/sharpa.md`](docs/adapters/sharpa.md) | sharpa users | sharpa-rl-lab integration example |
+| [`docs/adapters/hand_expert.md`](docs/adapters/hand_expert.md) | hand_expert users | hand_expert + nexus `EvalLogger` end-to-end worked example |
 | [`docs/ko/01_INTRO.md`](docs/ko/01_INTRO.md) | 🇰🇷 Team members | Full Korean onboarding |

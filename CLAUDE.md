@@ -245,4 +245,5 @@ that a real run would exercise. When adding a new pipeline stage, extend `_dummy
 | [`docs/30_METRICS_REFERENCE.md`](docs/30_METRICS_REFERENCE.md) | 8-metric table, 6-class failure taxonomy, acting on the distribution |
 | [`docs/31_CHECKPOINT_RANKING.md`](docs/31_CHECKPOINT_RANKING.md) | Scoring formula, presets, state-coverage heatmaps |
 | [`docs/adapters/sharpa.md`](docs/adapters/sharpa.md) | Complete sharpa-rl-lab integration example (use as adapter template) |
+| [`docs/adapters/hand_expert.md`](docs/adapters/hand_expert.md) | hand_expert + nexus `EvalLogger` worked example — embeds the four glue files (train.py diff, `scripts/eval_cli.py`, `configs/eval_config.yaml`, `scripts/run_eval_and_upload.py`) |
 | [`docs/ko/01_INTRO.md`](docs/ko/01_INTRO.md) | 🇰🇷 Self-contained Korean onboarding — setup, first run, output interpretation |

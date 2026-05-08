@@ -190,6 +190,19 @@ sharpa-rl-lab is a PPO / ProprioAdapt stack built on `DirectRLEnv` + `GymStyleEn
 - **env instrumentation**: `sharpa_wave_env.py` exposes `eval/success`, `eval/slip_detected`, etc. in the gym `info` dict
 - **config stanza**: see [`docs/adapters/sharpa.md`](./adapters/sharpa.md)
 
+## Worked example — hand_expert + nexus EvalLogger
+
+A sharpa-derived training repo (`hand_expert.algo.PPO` / `ProprioAdapt`, `SharpaEnvWrapper`)
+that already streams to nexus and now wants to attach observer outputs to the same central
+MLflow run via `EvalLogger.from_run_info(...)`. Unlike sharpa, the eval entrypoint is local
+(`scripts/eval_cli.py`) because the package and checkpoint format are custom.
+
+- **eval script**: `scripts.eval_cli` (local module, invoked with python -m)
+- **record script**: deferred — start with `skip_video: true`
+- **env instrumentation**: same `eval/*` info keys as sharpa
+- **logger glue**: nexus `EvalLogger` via `scripts/run_eval_and_upload.py`
+- **full walkthrough**: [`docs/adapters/hand_expert.md`](./adapters/hand_expert.md)
+
 ---
 
 ## Troubleshooting
@@ -218,5 +231,6 @@ Check that `init_roll_deg` / `init_pitch_deg` / `init_yaw_deg` reflect the actua
 | Document | Content |
 |:---|:---|
 | [`docs/adapters/sharpa.md`](./adapters/sharpa.md) | Complete sharpa adapter example |
+| [`docs/adapters/hand_expert.md`](./adapters/hand_expert.md) | hand_expert + nexus `EvalLogger` end-to-end worked example |
 | [`30_METRICS_REFERENCE.md`](./30_METRICS_REFERENCE.md) | Full metrics + failure taxonomy reference |
 | [`20_INTEGRATION_CONTRACT.md`](./20_INTEGRATION_CONTRACT.md) | Detailed schema reference |
