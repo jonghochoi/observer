@@ -124,22 +124,80 @@ If the existing `Sharpa-InHandRotation-Direct-v0` env populates these in `_get_o
 them — observer cannot synthesize them after the fact, and missing keys cause `episodes.json` to
 be empty (which silently disables observer's failure-classification and coverage stages).
 
-Confirm the env emits the keys before wiring the rest:
+> 📖 If you're new to *why* this `info`-dict channel exists and *how* the data flows from env →
+> eval CLI → `episodes.json` → observer's failure-classification / coverage stages, read
+> [`../23_ENV_INSTRUMENTATION.md`](../23_ENV_INSTRUMENTATION.md) first. It walks through the
+> full path with a minimal worked patch.
+
+Before wiring anything else, confirm what the env already emits. Use whichever check is faster —
+the dynamic one needs an Isaac boot:
+
+### ── Static check — grep the env source
+
+No Isaac boot. Looks for the assignments observer expects to find:
 
 ```bash
-python -c "
-import gymnasium as gym, hand_expert.envs  # noqa
-env = gym.make('Sharpa-InHandRotation-Direct-v0', cfg=...)
-obs, _ = env.reset()
-_, _, dones, infos = env.step(env.action_space.sample())
-sample = infos[dones.nonzero().flatten().tolist()[0]] if dones.any() else infos[0]
-required = ['eval/success', 'eval/length', 'eval/pos_error', 'eval/rot_error_deg',
-            'eval/init_roll_deg', 'eval/init_pitch_deg', 'eval/init_yaw_deg',
-            'eval/init_pos_x', 'eval/init_pos_y', 'eval/init_pos_z']
-missing = [k for k in required if k not in sample]
-print('missing:', missing or 'none')
-"
+grep -nE 'self\.extras\["eval/' \
+    hand_expert/envs/in_hand_rotation/direct/v0/sharpa_wave_env.py
 ```
+
+Ten lines (one per `eval/<key>`) → instrumentation is done. Zero lines → the env needs a patch.
+
+### ── Dynamic check — `scripts/instrumentation_probe.py`
+
+Mirrors `train.py` / `play.py`'s `AppLauncher` boot, runs one step, and reports which keys
+arrive in the gym `info` dict. Save in the training repo at `scripts/instrumentation_probe.py`:
+
+```python
+"""scripts/instrumentation_probe.py — does the env emit the eval/* info keys?
+Run via:  ./isaaclab.sh -p scripts/instrumentation_probe.py
+"""
+import argparse, sys
+from isaaclab.app import AppLauncher
+
+p = argparse.ArgumentParser()
+p.add_argument("--task", default="Sharpa-InHandRotation-Direct-v0")
+p.add_argument("--num_envs", type=int, default=4)
+AppLauncher.add_app_launcher_args(p)
+args, hydra_args = p.parse_known_args()
+sys.argv = [sys.argv[0]] + hydra_args
+sim = AppLauncher(args).app
+
+import gymnasium as gym
+import torch
+from isaaclab_tasks.utils.hydra import hydra_task_config
+import hand_expert.envs  # noqa: F401
+from hand_expert.utils.env_wrapper import SharpaEnvWrapper
+
+@hydra_task_config(args.task, "agent_cfg_entry_point")
+def main(env_cfg, agent_cfg):
+    env_cfg.scene.num_envs = args.num_envs
+    env = gym.make(args.task, cfg=env_cfg, render_mode=None)
+    env = SharpaEnvWrapper(env, clip_actions=1.0)
+    obs, _ = env.reset()
+    actions = torch.zeros(
+        (args.num_envs, env.action_space.shape[-1]),
+        device=env.unwrapped.device,
+    )
+    _, _, _, _, info = env.step(actions)
+    required = ["eval/success", "eval/length", "eval/pos_error", "eval/rot_error_deg",
+                "eval/init_roll_deg", "eval/init_pitch_deg", "eval/init_yaw_deg",
+                "eval/init_pos_x", "eval/init_pos_y", "eval/init_pos_z"]
+    sample = info if isinstance(info, dict) else info[0]
+    missing = [k for k in required if k not in sample]
+    print("present:", sorted(set(required) - set(missing)))
+    print("missing:", missing or "none")
+    print("all eval/ keys:", sorted(k for k in sample if k.startswith("eval/")))
+    env.close()
+
+if __name__ == "__main__":
+    main()
+    sim.close()
+```
+
+Run via `./isaaclab.sh -p scripts/instrumentation_probe.py` — plain `python` fails with
+`ModuleNotFoundError: No module named 'pxr'` because IsaacLab `DirectRLEnv` only loads inside
+the IsaacSim interpreter that ships the USD library.
 
 ---
 

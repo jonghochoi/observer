@@ -169,6 +169,10 @@ You can import the utility libraries (`observer.isaac.CameraController`, `observ
 
 Observer never touches the env directly. Your eval script reads these values from the gym `info` dict, internal buffers, or whatever instrumentation you already have, and writes `episodes.json`.
 
+> 📖 For the full data-flow walkthrough (env → `info` → `episodes.json` → observer pipeline),
+> the per-env-tensor vs scalar contract, a worked env patch, and a ready-to-run probe script,
+> see [`23_ENV_INSTRUMENTATION.md`](23_ENV_INSTRUMENTATION.md).
+
 ---
 
 ## §4 — Post-training upload glue

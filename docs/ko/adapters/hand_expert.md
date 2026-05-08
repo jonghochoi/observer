@@ -127,22 +127,79 @@ observer는 매 step의 `info` dict를 episode 종료 시점에 스냅샷해 `ep
 환경에 패치가 필요 — observer는 사후에 합성할 수 없고, 누락 시 `episodes.json`이 비며
 **failure-classification과 coverage 단계가 조용히 비활성화**됩니다.
 
-다른 단계로 넘어가기 전에 환경이 키를 떨구는지 먼저 확인:
+> 📖 이 `info`-dict 채널이 *왜* 존재하는지, env → eval CLI → `episodes.json` → observer
+> failure-classification / coverage 까지 데이터가 *어떻게* 흐르는지 처음 본다면
+> [`../../23_ENV_INSTRUMENTATION.md`](../../23_ENV_INSTRUMENTATION.md)을 먼저 읽으세요. 최소
+> 패치 워크드 예제와 함께 전체 경로를 보여줍니다.
+
+다른 단계로 넘어가기 전에 환경이 어느 키를 이미 떨구는지 확인 — 둘 중 빠른 쪽으로:
+
+### ── 정적 확인 — env 소스 grep
+
+Isaac 부팅 불필요. observer가 기대하는 대입 라인을 직접 찾음:
 
 ```bash
-python -c "
-import gymnasium as gym, hand_expert.envs  # noqa
-env = gym.make('Sharpa-InHandRotation-Direct-v0', cfg=...)
-obs, _ = env.reset()
-_, _, dones, infos = env.step(env.action_space.sample())
-sample = infos[dones.nonzero().flatten().tolist()[0]] if dones.any() else infos[0]
-required = ['eval/success', 'eval/length', 'eval/pos_error', 'eval/rot_error_deg',
-            'eval/init_roll_deg', 'eval/init_pitch_deg', 'eval/init_yaw_deg',
-            'eval/init_pos_x', 'eval/init_pos_y', 'eval/init_pos_z']
-missing = [k for k in required if k not in sample]
-print('missing:', missing or 'none')
-"
+grep -nE 'self\.extras\["eval/' \
+    hand_expert/envs/in_hand_rotation/direct/v0/sharpa_wave_env.py
 ```
+
+10개 라인이 보이면 instrumentation 완료. 0개면 env 패치 필요.
+
+### ── 동적 확인 — `scripts/instrumentation_probe.py`
+
+`train.py` / `play.py`와 동일한 `AppLauncher` 부트로 한 step만 돌려, 어떤 키가 gym `info`
+dict에 도착하는지 출력. 학습 레포의 `scripts/instrumentation_probe.py`에 저장:
+
+```python
+"""scripts/instrumentation_probe.py — env이 eval/* info 키를 떨구는지 확인.
+실행: ./isaaclab.sh -p scripts/instrumentation_probe.py
+"""
+import argparse, sys
+from isaaclab.app import AppLauncher
+
+p = argparse.ArgumentParser()
+p.add_argument("--task", default="Sharpa-InHandRotation-Direct-v0")
+p.add_argument("--num_envs", type=int, default=4)
+AppLauncher.add_app_launcher_args(p)
+args, hydra_args = p.parse_known_args()
+sys.argv = [sys.argv[0]] + hydra_args
+sim = AppLauncher(args).app
+
+import gymnasium as gym
+import torch
+from isaaclab_tasks.utils.hydra import hydra_task_config
+import hand_expert.envs  # noqa: F401
+from hand_expert.utils.env_wrapper import SharpaEnvWrapper
+
+@hydra_task_config(args.task, "agent_cfg_entry_point")
+def main(env_cfg, agent_cfg):
+    env_cfg.scene.num_envs = args.num_envs
+    env = gym.make(args.task, cfg=env_cfg, render_mode=None)
+    env = SharpaEnvWrapper(env, clip_actions=1.0)
+    obs, _ = env.reset()
+    actions = torch.zeros(
+        (args.num_envs, env.action_space.shape[-1]),
+        device=env.unwrapped.device,
+    )
+    _, _, _, _, info = env.step(actions)
+    required = ["eval/success", "eval/length", "eval/pos_error", "eval/rot_error_deg",
+                "eval/init_roll_deg", "eval/init_pitch_deg", "eval/init_yaw_deg",
+                "eval/init_pos_x", "eval/init_pos_y", "eval/init_pos_z"]
+    sample = info if isinstance(info, dict) else info[0]
+    missing = [k for k in required if k not in sample]
+    print("present:", sorted(set(required) - set(missing)))
+    print("missing:", missing or "none")
+    print("all eval/ keys:", sorted(k for k in sample if k.startswith("eval/")))
+    env.close()
+
+if __name__ == "__main__":
+    main()
+    sim.close()
+```
+
+`./isaaclab.sh -p scripts/instrumentation_probe.py`로 실행 — 일반 `python`은
+`ModuleNotFoundError: No module named 'pxr'`로 실패합니다. IsaacLab `DirectRLEnv`는 USD
+라이브러리(`pxr`)를 함께 띄우는 IsaacSim 인터프리터에서만 로드되기 때문.
 
 ---
 
