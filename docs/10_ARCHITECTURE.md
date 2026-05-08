@@ -108,6 +108,45 @@ observer/                            ← repository root (metadata only)
 
 ---
 
+## Packaging boundary
+
+Every subdirectory in this repository is a Python package. `pipeline/`, `isaac/`, `viz/`, and `configs/` all carry an `__init__.py` and are picked up by the discovery rule in `pyproject.toml`:
+
+```toml
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["observer*"]
+```
+
+This is not accidental — observer is intentionally a **library + CLI hybrid**. Both surfaces are first-class.
+
+### ── Library + CLI hybrid usage
+
+- **CLI** — `[project.scripts]` registers `observer = "observer.eval_runner:main"`. After `pip install -e .` the `observer` console script is available, alongside `python -m observer.eval_runner` for environments where `pip` isn't an option.
+- **Library** — external trainer / evaluation scripts import submodules directly:
+
+  ```python
+  from observer.pipeline.result_locator    import locate_results       # find result dirs
+  from observer.pipeline.metrics_collector import MetricsCollector     # reuse aggregation
+  from observer.isaac.camera_controller    import CameraController     # adapter utility
+  ```
+
+  The handoff to external trackers (MLflow, W&B, ...) is fully specified in [`22_EXTERNAL_LOGGER_HANDOFF.md`](./22_EXTERNAL_LOGGER_HANDOFF.md).
+
+> [!IMPORTANT]
+> `observer/isaac/` is part of the public surface even though Observer itself "never imports Isaac directly" (see [TL;DR](#tldr)). The user's record script imports from it (`from observer.isaac.recorder import VideoRecorder`) — that's exactly why it must ship as a library.
+
+### ── Contrast with the sibling nexus repo
+
+`jonghochoi/nexus` packages **only** `nexus.logger` and intentionally leaves `post_upload/`, `scheduled_sync/`, `chart_settings/` outside the wheel — those are operator-invoked tools that run on a GPU server or MLflow host, not inside another Python process. Observer is the opposite: every component is a candidate for a downstream `import`, so the entire tree is shipped.
+
+### ── Decision rule for new modules
+
+- **Default to packaging** — put new code under `observer/<subpkg>/` with an `__init__.py`. Adapter authors may want to reuse it (see [`21_ADAPTER_GUIDE.md`](./21_ADAPTER_GUIDE.md)).
+- **Exception** — only an internal build/release script that **must not** be importable belongs outside the package, and such scripts are very rare in this repo. When in doubt, package it.
+
+---
+
 ## Output directory structure
 
 After a run, outputs are written under `eval_results/`:
