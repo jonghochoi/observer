@@ -15,6 +15,7 @@ from __future__ import annotations
 import json
 import logging
 import subprocess
+import sys
 import time
 from pathlib import Path
 from dataclasses import dataclass, field
@@ -110,12 +111,32 @@ class PipelineOrchestrator:
 
     # ── Step 1: metrics collection ────────────────────────────────────
     def _run_metrics_collection(self, checkpoint: Path, out_dir: Path) -> dict:
-        if self.config.dry_run:
-            log.info("    [dry_run] Returning dummy metrics")
-            return _dummy_metrics(checkpoint.name)
-
         metrics_path = out_dir / self.config.metrics_filename
         episodes_path = out_dir / "episodes.json"
+
+        if self.config.dry_run:
+            log.info("    [dry_run] Returning dummy metrics")
+            metrics = _dummy_metrics(checkpoint.name)
+            # Write on disk too so downstream consumers — e.g. the
+            # nexus EvalLogger.upload() called from a bridge script —
+            # can find `metrics.json` under `result.output_dir`. Without
+            # this, dry-run smoke tests abort with "no metrics produced".
+            with open(metrics_path, "w") as f:
+                json.dump(metrics, f, indent=2)
+            return metrics
+
+        # Fail fast with a clean message before spawning Isaac. The eval
+        # subprocess loads the checkpoint via `torch.load` deep inside a
+        # hydra-wrapped main, so a missing file otherwise surfaces as a
+        # 25-line traceback that buries the relevant path.
+        ckpt_abs = Path(checkpoint).resolve()
+        if not ckpt_abs.exists():
+            raise FileNotFoundError(
+                f"checkpoint not found: {ckpt_abs}. "
+                f"Verify the path passed via --checkpoint and check whether the "
+                f"trainer wrote `best.pth` (some configs only emit `last.pth`)."
+            )
+
         cmd = self._build_metrics_cmd(
             checkpoint=checkpoint,
             metrics_path=metrics_path,
@@ -210,6 +231,12 @@ class PipelineOrchestrator:
 
         self.config.runtime.validate_for_record()
 
+        ckpt_abs = Path(checkpoint).resolve()
+        if not ckpt_abs.exists():
+            raise FileNotFoundError(
+                f"checkpoint not found for recording: {ckpt_abs}"
+            )
+
         video_dir    = out_dir / self.config.video_subdir
         video_dir.mkdir(exist_ok=True)
         cam_cfg_path = out_dir / "camera_poses.json"
@@ -220,8 +247,8 @@ class PipelineOrchestrator:
             extra_args=[
                 f"--num_envs={self.config.runtime.num_envs}",
                 "--record_mode",
-                f"--camera_config={cam_cfg_path}",
-                f"--video_output_dir={video_dir}",
+                f"--camera_config={cam_cfg_path.resolve()}",
+                f"--video_output_dir={video_dir.resolve()}",
                 f"--video_fps={self.config.video.fps}",
                 f"--video_resolution="
                 f"{self.config.video.resolution[0]}x{self.config.video.resolution[1]}",
@@ -324,16 +351,21 @@ class PipelineOrchestrator:
         """
         rt = self.config.runtime
         rt.validate_for_metrics()
+        # Use sys.executable so the metrics subprocess runs under the same
+        # interpreter as observer — matters in Isaac Sim envs where the only
+        # python on PATH is `python.sh` or there is no plain `python` at all.
+        # Paths are resolved to absolute because hydra-wrapped eval scripts
+        # change CWD before the body runs, which would break relative paths.
         cmd = [
-            "python", "-m", rt.eval_module,
+            sys.executable, "-m", rt.eval_module,
             f"--task={rt.task}",
-            f"--load_path={checkpoint}",
+            f"--load_path={Path(checkpoint).resolve()}",
             f"--device={rt.device}",
             f"--seed={rt.seed}",
             f"--num_envs={rt.num_envs}",
             f"--num_episodes={self.config.metrics.num_eval_episodes}",
-            f"--metrics_output={metrics_path}",
-            f"--episodes_output={episodes_path}",
+            f"--metrics_output={Path(metrics_path).resolve()}",
+            f"--episodes_output={Path(episodes_path).resolve()}",
             "--headless",
         ]
         cmd.extend(rt.extra_eval_args)
@@ -342,10 +374,11 @@ class PipelineOrchestrator:
     def _build_record_cmd(self, checkpoint: Path, extra_args: list[str]) -> list[str]:
         """Build the video recording subprocess command."""
         rt = self.config.runtime
+        # Same hydra-CWD caveat as `_build_metrics_cmd`: pass absolute paths.
         cmd = [
             rt.resolve_isaac_lab_path(), "-p", rt.record_script,
             f"--task={rt.task}",
-            f"--load_path={checkpoint}",
+            f"--load_path={Path(checkpoint).resolve()}",
             f"--device={rt.device}",
             f"--seed={rt.seed}",
             *extra_args,
@@ -356,18 +389,48 @@ class PipelineOrchestrator:
     def _make_output_dir(self, checkpoint: Path) -> Path:
         stamp    = time.strftime("%Y%m%d_%H%M%S")
         dir_name = f"{checkpoint.parent.name}__{checkpoint.stem}__{stamp}"
-        out_dir  = self.output_root / dir_name
+        # Always return an absolute path. Bridges (e.g. run_eval_and_upload.py)
+        # feed `result.output_dir` back into `locate_results(..., result_dir=)`,
+        # which would otherwise re-prefix a relative path with `output_root`
+        # and look for the bundle at a doubled path that does not exist.
+        out_dir  = (self.output_root / dir_name).resolve()
         out_dir.mkdir(parents=True, exist_ok=True)
         return out_dir
 
 
 # ── Helper functions ──────────────────────────────────────────────────
 def _run_subprocess(cmd: list[str], label: str):
-    result = subprocess.run(cmd, capture_output=True, text=True)
-    if result.returncode != 0:
+    """Spawn `cmd`, stream its merged stdout/stderr line-by-line through
+    observer's stdout so the user sees real-time progress (e.g. the
+    eval_cli per-episode heartbeat). Raise on non-zero exit with the last
+    50 lines attached for debugging — the previous `subprocess.run(...,
+    capture_output=True)` form swallowed all output until the process
+    finished, which made multi-minute Isaac runs look frozen.
+
+    Forwards via `print(...)` rather than `log.info(...)` because the bridge
+    scripts that drive observer (e.g. `run_eval_and_upload.py`) don't
+    configure Python `logging`, so a root logger at the default WARNING
+    level would silently drop every streamed line.
+    """
+    proc = subprocess.Popen(
+        cmd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+        bufsize=1,
+    )
+    captured: list[str] = []
+    assert proc.stdout is not None
+    for line in proc.stdout:
+        line = line.rstrip()
+        print(f"  [{label}] {line}", flush=True)
+        captured.append(line)
+    proc.wait()
+    if proc.returncode != 0:
+        tail = "\n".join(captured[-50:])
         raise RuntimeError(
-            f"[{label}] subprocess failed (code={result.returncode})\n"
-            f"STDERR:\n{result.stderr[-2000:]}"
+            f"[{label}] subprocess failed (code={proc.returncode})\n"
+            f"OUTPUT (tail):\n{tail}"
         )
 
 
