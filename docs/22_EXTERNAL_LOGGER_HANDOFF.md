@@ -254,6 +254,18 @@ def evaluate_and_upload(checkpoint, training_output_dir, observer_config_yaml):
     )
 ```
 
+When the downstream logger is **NEXUS**, the glue collapses to a one-liner shell call — the per-checkpoint `result.output_dir` is exactly the shape `nexus`'s `upload_eval.py` accepts, so the training repo doesn't even need to import `nexus`:
+
+```bash
+python /path/to/nexus/post_upload/upload_eval.py \
+    --run_info  "$TRAIN_OUTPUT_DIR" \
+    --eval_dir  "$RESULT_OUTPUT_DIR" \
+    --metrics_from "$RESULT_OUTPUT_DIR/metrics.json" \
+    --tag observer.checkpoint="$(basename "$CHECKPOINT")"
+```
+
+`--run_info` reads `.nexus_run.json` written by the trainer's `make_logger()`; `--eval_dir` is observer's per-checkpoint `result.output_dir` from the snippet above. Both videos and `metrics.json` land on the central MLflow run that owns the checkpoint, with a per-bundle `eval/<eval_id>/index.html` for in-UI playback.
+
 ---
 
 ## Failure modes
