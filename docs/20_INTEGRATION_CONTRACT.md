@@ -34,7 +34,7 @@
 Observer invokes the eval module as:
 
 ```bash
-python -m <runtime.eval_module> \
+<sys.executable> -m <runtime.eval_module> \
     --task=<runtime.task> \
     --load_path=<checkpoint.pth> \
     --device=<runtime.device> \
@@ -46,6 +46,11 @@ python -m <runtime.eval_module> \
     --headless \
     <runtime.extra_eval_args...>
 ```
+
+The Python interpreter is `sys.executable` — the same one running observer — so launch
+observer under the interpreter where the eval module's deps (e.g. `isaaclab`, `torch`) are
+importable. In Isaac Sim setups that means invoking `run_eval_and_upload.py` (or `eval_runner`)
+through `${ISAACLAB_PATH}/isaaclab.sh -p` or `_isaac_sim/python.sh`.
 
 ### ── Required CLI flags
 
@@ -168,6 +173,10 @@ You can import the utility libraries (`observer.isaac.CameraController`, `observ
 | `contact_forces`, `joint_velocities` *(optional)* | Per-step RMS aggregates |
 
 Observer never touches the env directly. Your eval script reads these values from the gym `info` dict, internal buffers, or whatever instrumentation you already have, and writes `episodes.json`.
+
+> 📖 For the full data-flow walkthrough (env → `info` → `episodes.json` → observer pipeline),
+> the per-env-tensor vs scalar contract, a worked env patch, and a ready-to-run probe script,
+> see [`23_ENV_INSTRUMENTATION.md`](23_ENV_INSTRUMENTATION.md).
 
 ---
 
