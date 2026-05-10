@@ -242,6 +242,7 @@ that a real run would exercise. When adding a new pipeline stage, extend `_dummy
 | [`docs/10_ARCHITECTURE.md`](docs/10_ARCHITECTURE.md) | Component map, repository file tree, output directory layout, dependencies |
 | [`docs/20_INTEGRATION_CONTRACT.md`](docs/20_INTEGRATION_CONTRACT.md) | Subprocess CLI shapes, `metrics.json` / `episodes.json` schemas, env instrumentation |
 | [`docs/21_ADAPTER_GUIDE.md`](docs/21_ADAPTER_GUIDE.md) | Step-by-step guide for writing a new framework adapter |
+| [`docs/23_ENV_INSTRUMENTATION.md`](docs/23_ENV_INSTRUMENTATION.md) | End-to-end env→`info`→`episodes.json`→observer data-flow walkthrough; per-env vs scalar contract; worked patch and probe script |
 | [`docs/30_METRICS_REFERENCE.md`](docs/30_METRICS_REFERENCE.md) | 8-metric table, 6-class failure taxonomy, acting on the distribution |
 | [`docs/31_CHECKPOINT_RANKING.md`](docs/31_CHECKPOINT_RANKING.md) | Scoring formula, presets, state-coverage heatmaps |
 | [`docs/adapters/sharpa.md`](docs/adapters/sharpa.md) | Complete sharpa-rl-lab integration example (use as adapter template) |
