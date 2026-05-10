@@ -89,7 +89,12 @@ def locate_results(
 
     if result_dir is not None:
         chosen = Path(result_dir)
-        if not chosen.is_absolute():
+        # Accept either an absolute path, a CWD-relative full path that already
+        # contains `output_root`, or a bare basename that should be joined to
+        # `output_root`. The earlier blind prefix produced a doubled path when
+        # callers (e.g. `run_eval_and_upload.py`) passed back the
+        # `result.output_dir` they got from the orchestrator verbatim.
+        if not chosen.is_absolute() and not chosen.exists():
             chosen = output_root / chosen
     else:
         chosen = _latest_result_dir(output_root)
