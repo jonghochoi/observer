@@ -39,6 +39,11 @@ Dexterous manipulation research generates checkpoints far faster than humans can
 `success_rate = 0.91` looks great — but it may hide 3 slips/episode, 5× energy usage, and joint velocity spikes.
 Manual review always introduces selection, recency, and fatigue bias.
 
+> 💡 **Design invariant — subprocess-only boundary.** Observer never imports torch, Isaac, or your RL stack.
+> Your eval / record scripts run as subprocesses; the only coupling is the JSON contract in
+> [`docs/20_INTEGRATION_CONTRACT.md`](docs/20_INTEGRATION_CONTRACT.md). That is what makes it
+> truly framework-agnostic (PPO / RSL-RL / CleanRL / anything).
+
 ---
 
 ## What this pipeline does
@@ -50,15 +55,56 @@ observer --checkpoint_dir runs/ --recursive \
     --auto_select --select_weights hardware_safe
 ```
 
-| # | Step | Output |
+| # | Stage | What it does |
 |:---:|:---|:---|
-| 1 | **Metrics collection** | `metrics.json` — 8 quantitative metrics |
-| 2 | **Failure mode classification** | 6-class rule chain, no training data required |
-| 3 | **State coverage analysis** | roll × pitch success heatmap |
-| 4 | **Multi-view video recording** | 5 viewpoints + 2×3 grid mp4 |
-| 5 | **Experiment tracking** | TensorBoard auto-detection |
-| 6 | **Multi-objective ranking** | Weighted score: success rate, slip, energy, pose error |
-| 7 | **HTML report** | Includes charts, pie graphs, videos, and heatmaps |
+| 1 | **Metrics aggregation** | Reads `metrics.json` written by your eval script — schema is yours to define |
+| 2 | **Failure mode classification** | Priority rule chain over `episodes.json` — no training data required |
+| 3 | **State coverage analysis** | 2D success heatmap over whichever pose axes you emit |
+| 4 | **Multi-view video recording** | Multi-viewpoint capture + grid mp4 (driven by your record script) |
+| 5 | **Experiment tracking** | TensorBoard auto-detection (optional) |
+| 6 | **Multi-objective ranking** | Weighted score across whichever metrics you opt in to |
+| 7 | **HTML report** | Self-contained: charts, pie graphs, videos, heatmaps |
+
+> ⚠️ **None of the stages have a fixed schema.** Observer is task-agnostic — what each stage
+> consumes is determined by the JSON contract in
+> [`docs/20_INTEGRATION_CONTRACT.md`](docs/20_INTEGRATION_CONTRACT.md). The only universally required
+> fields are `checkpoint`, `num_episodes`, and `success_rate`. Anything else is
+> opt-in: emit it and the corresponding analysis lights up; omit it and that analysis is silently skipped.
+
+### ── Bundled dexterous-manipulation defaults
+
+Out of the box observer ships with a metric set and failure taxonomy tuned for **dexterous manipulation**
+research. They are examples of what the contract enables, not a fixed pipeline — drop fields you don't
+have, add your own metric keys, or extend `FailureModeClassifier` with new rules
+(see the *"When adding new features"* checklists in [`CLAUDE.md`](CLAUDE.md)).
+
+**Default metric keys** — `success_rate`, `contact_force_rms` (N), `joint_velocity_rms` (rad/s),
+`slip_events_per_episode`, `mean_episode_length`, `object_pos_error_mm`, `object_rot_error_deg`, `energy_J`.
+Full table with units and interpretation: [`docs/30_METRICS_REFERENCE.md`](docs/30_METRICS_REFERENCE.md).
+
+**Default failure rules** — priority-ordered; first match wins, and the dominant mode hints at what to
+fix in the reward / curriculum:
+
+| Priority | Mode | If dominant → consider |
+|:---:|:---|:---|
+| 1 | `early_drop` | Grasp initialization / curriculum |
+| 2 | `singularity_hit` | Joint velocity limit / singularity avoidance reward |
+| 3 | `late_slip` | Slip penalty in reward |
+| 4 | `contact_loss` | Contact force reward |
+| 5 | `repose_failure` | Goal pose error reward |
+| 6 | `timeout` | Simplify curriculum / improve exploration |
+
+These are appropriate for *fingertip-grasp manipulation tasks*. For other domains (locomotion, navigation,
+bimanual, etc.) you would replace rules and metric keys — observer's analysis code reads them generically.
+
+**Default ranking presets** (`--select_weights`) — also tuned for the same manipulation use case;
+override with your own weights when the trade-offs differ:
+
+| Preset | When to use |
+|:---|:---|
+| `balanced` | Everyday experiment comparison — all metrics weighted evenly |
+| `hardware_safe` | Pre-deployment selection — heavy penalties on slip and energy |
+| `performance_first` | Ablation studies — prioritizes raw task success rate |
 
 ---
 
@@ -85,6 +131,12 @@ observer --checkpoint_dir runs/ --dry_run                 # validation only
 
 Observer is **framework-agnostic**. It runs your eval/record scripts as subprocesses,
 as long as those scripts satisfy the contract in [`docs/20_INTEGRATION_CONTRACT.md`](docs/20_INTEGRATION_CONTRACT.md).
+
+> 📖 Writing an adapter for a new framework? Start at [`docs/21_ADAPTER_GUIDE.md`](docs/21_ADAPTER_GUIDE.md).
+> Already have an env but `episodes.json` looks empty? See
+> [`docs/23_ENV_INSTRUMENTATION.md`](docs/23_ENV_INSTRUMENTATION.md) for the env→`info`→`episodes.json` flow
+> and a minimal worked patch. Forwarding observer outputs to MLflow / W&B?
+> [`docs/22_EXTERNAL_LOGGER_HANDOFF.md`](docs/22_EXTERNAL_LOGGER_HANDOFF.md) covers `result_locator`.
 
 ```yaml
 # observer/configs/eval_config.yaml
