@@ -18,11 +18,18 @@
 
 ---
 
-> ### 📖 New here? Read this first.
+> ### 📖 New here? Start with the onboarding guide.
+>
+> **한글 온보딩 (Korean guide):** [`docs/observer_guide.html`](docs/observer_guide.html)
+> — download and open in a browser for a full visual walkthrough of OBSERVER.
+>
+> ```bash
+> git clone https://github.com/jonghochoi/observer.git
+> open observer/docs/observer_guide.html   # macOS
+> # xdg-open observer/docs/observer_guide.html   # Linux
+> ```
 >
 > Every team-agreed rule and engineering invariant lives on **one page**: [`docs/00_PRINCIPLES.md`](docs/00_PRINCIPLES.md) — *5 min, English*.
->
-> 한글 온보딩 트랙은 [`docs/ko/`](docs/ko/)에서 시작하세요.
 
 ---
 
@@ -74,8 +81,7 @@ observer --checkpoint_dir runs/ \                         # ranking + deploy
 observer --checkpoint_dir runs/ --dry_run                 # validation only
 ```
 
-> **First time?** Run `./scripts/setup.sh` to check prerequisites,
-> validate your configuration with `observer doctor`, then start with `--dry_run`.
+> **First time?** Run `observer doctor` to validate your configuration, then start with `--dry_run` to verify the pipeline structure before running Isaac.
 
 Observer is **framework-agnostic**. It runs your eval/record scripts as subprocesses,
 as long as those scripts satisfy the contract in [`docs/20_INTEGRATION_CONTRACT.md`](docs/20_INTEGRATION_CONTRACT.md).
@@ -108,17 +114,19 @@ observer.eval_runner
 
 ---
 
-## Documentation
+## Further Reading
 
-| Document | Audience | Content |
-|:---|:---|:---|
-| [`docs/00_PRINCIPLES.md`](docs/00_PRINCIPLES.md) | Everyone | Why evaluation matters, design principles |
-| [`docs/10_ARCHITECTURE.md`](docs/10_ARCHITECTURE.md) | Engineers | System structure, file map, dependencies |
-| [`docs/20_INTEGRATION_CONTRACT.md`](docs/20_INTEGRATION_CONTRACT.md) | Developers | eval/record script contract |
-| [`docs/21_ADAPTER_GUIDE.md`](docs/21_ADAPTER_GUIDE.md) | Developers | Writing a new framework adapter |
-| [`docs/22_EXTERNAL_LOGGER_HANDOFF.md`](docs/22_EXTERNAL_LOGGER_HANDOFF.md) | Developers | Forwarding observer outputs to a downstream logger (MLflow, W&B, etc.) via `result_locator` |
-| [`docs/23_ENV_INSTRUMENTATION.md`](docs/23_ENV_INSTRUMENTATION.md) | Developers | How `info` flows env → eval CLI → `episodes.json` → observer; required keys, per-env vs scalar contract, worked patch |
-| [`docs/30_METRICS_REFERENCE.md`](docs/30_METRICS_REFERENCE.md) | Everyone | 8 metrics + 6-class failure classification |
-| [`docs/31_CHECKPOINT_RANKING.md`](docs/31_CHECKPOINT_RANKING.md) | Everyone | Multi-objective ranking + state coverage |
-| [`docs/adapters/sharpa.md`](docs/adapters/sharpa.md) | sharpa users | sharpa-rl-lab integration example |
-| [`docs/ko/01_INTRO.md`](docs/ko/01_INTRO.md) | 🇰🇷 Team members | Full Korean onboarding |
+> Filename prefix conveys reading order. **Everyone reads `00_PRINCIPLES.md` first**, then picks up the relevant track below.
+
+| # | Document | Audience | Content |
+|:---:|:---|:---|:---|
+| **HTML** | [`docs/observer_guide.html`](docs/observer_guide.html) | 🇰🇷 Team members | **Korean onboarding guide** — download and open locally for a full visual walkthrough |
+| **00** | [`docs/00_PRINCIPLES.md`](docs/00_PRINCIPLES.md) | Everyone | **Read first.** Why evaluation matters, design principles |
+| **10** | [`docs/10_ARCHITECTURE.md`](docs/10_ARCHITECTURE.md) | Engineers | System structure, file map, dependencies |
+| **20** | [`docs/20_INTEGRATION_CONTRACT.md`](docs/20_INTEGRATION_CONTRACT.md) | Developers | eval/record script contract |
+| **21** | [`docs/21_ADAPTER_GUIDE.md`](docs/21_ADAPTER_GUIDE.md) | Developers | Writing a new framework adapter |
+| **22** | [`docs/22_EXTERNAL_LOGGER_HANDOFF.md`](docs/22_EXTERNAL_LOGGER_HANDOFF.md) | Developers | Forwarding observer outputs to a downstream logger (MLflow, W&B, etc.) via `result_locator` |
+| **23** | [`docs/23_ENV_INSTRUMENTATION.md`](docs/23_ENV_INSTRUMENTATION.md) | Developers | How `info` flows env → eval CLI → `episodes.json` → observer; required keys, per-env vs scalar contract, worked patch |
+| **30** | [`docs/30_METRICS_REFERENCE.md`](docs/30_METRICS_REFERENCE.md) | Everyone | 8 metrics + 6-class failure classification |
+| **31** | [`docs/31_CHECKPOINT_RANKING.md`](docs/31_CHECKPOINT_RANKING.md) | Everyone | Multi-objective ranking + state coverage |
+| — | [`docs/adapters/sharpa.md`](docs/adapters/sharpa.md) | sharpa users | sharpa-rl-lab integration example |
