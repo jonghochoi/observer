@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OBSERVER — Automated Evaluation Pipeline</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --indigo:      #6366f1;
+      --indigo-dark: #4f46e5;
+      --indigo-soft: #eef2ff;
+      --blue:        #1e6fdc;
+      --blue-soft:   #e8f1fd;
+      --green:       #22c55e;
+      --amber:       #f59e0b;
+      --red:         #ef4444;
+      --bg:          #f7f9fc;
+      --surface:     #ffffff;
+      --border:      #e2e8f0;
+      --text:        #1a202c;
+      --text-muted:  #6b7280;
+      --code-bg:     #1e2433;
+      --code-text:   #e2e8f0;
+      --radius:      10px;
+      --shadow:      0 2px 12px rgba(0,0,0,.08);
+      --nav-h:       60px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+      font-size: 15px;
+    }
+
+    /* ── Nav ── */
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(255,255,255,.95);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--border);
+      height: var(--nav-h);
+      display: flex; align-items: center;
+    }
+    .nav-inner {
+      max-width: 1100px; margin: 0 auto; padding: 0 1.5rem;
+      width: 100%;
+      display: flex; align-items: center; gap: 1rem;
+    }
+    .nav-logo {
+      font-weight: 800; font-size: 1.15rem;
+      color: var(--indigo-dark); white-space: nowrap;
+      text-decoration: none;
+    }
+    .nav-logo span { color: var(--text); font-weight: 400; }
+    .nav-links {
+      display: flex; gap: .2rem;
+      list-style: none;
+      overflow-x: auto;
+      flex-wrap: nowrap;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+    .nav-links::-webkit-scrollbar { display: none; }
+    .nav-links a {
+      text-decoration: none; color: var(--text-muted);
+      font-size: .82rem; font-weight: 500;
+      padding: .35rem .65rem;
+      border-radius: 6px;
+      white-space: nowrap;
+      transition: color .15s, background .15s;
+    }
+    .nav-links a:hover { color: var(--indigo-dark); background: var(--indigo-soft); }
+
+    /* ── Hero ── */
+    .hero {
+      background: linear-gradient(135deg, #0f0f1a 0%, #1a1040 50%, #2d1b69 100%);
+      color: #fff;
+      padding: 5rem 1.5rem 4rem;
+      text-align: center;
+    }
+    .hero-sigil {
+      display: inline-block;
+      background: var(--indigo);
+      color: #fff;
+      font-weight: 900;
+      font-size: .9rem;
+      padding: .25rem .75rem;
+      border-radius: 4px;
+      letter-spacing: .08em;
+      margin-bottom: 1.5rem;
+    }
+    .hero h1 {
+      font-size: clamp(2rem, 5vw, 3.2rem);
+      font-weight: 800;
+      line-height: 1.15;
+      margin-bottom: .75rem;
+    }
+    .hero h1 em { font-style: normal; color: #a5b4fc; }
+    .hero .tagline {
+      font-size: clamp(.95rem, 2.5vw, 1.2rem);
+      color: #b8b0e8;
+      margin-bottom: 2rem;
+      max-width: 600px;
+      margin-left: auto; margin-right: auto;
+    }
+    .hero-badges {
+      display: flex; flex-wrap: wrap; gap: .5rem;
+      justify-content: center;
+      margin-bottom: 2.5rem;
+    }
+    .badge {
+      background: rgba(255,255,255,.12);
+      border: 1px solid rgba(255,255,255,.2);
+      color: #cce; font-size: .78rem; font-weight: 600;
+      padding: .3rem .8rem; border-radius: 20px;
+    }
+    .hero-cta { display: flex; flex-wrap: wrap; gap: .75rem; justify-content: center; }
+    .btn {
+      display: inline-block;
+      padding: .65rem 1.5rem;
+      border-radius: 8px;
+      font-weight: 700; font-size: .9rem;
+      text-decoration: none;
+      transition: transform .15s, box-shadow .15s;
+    }
+    .btn:hover { transform: translateY(-2px); box-shadow: 0 4px 18px rgba(0,0,0,.2); }
+    .btn-primary  { background: var(--indigo); color: #fff; }
+    .btn-secondary { background: rgba(255,255,255,.12); color: #fff; border: 1px solid rgba(255,255,255,.3); }
+
+    /* ── Layout ── */
+    main { max-width: 1100px; margin: 0 auto; padding: 3rem 1.5rem 5rem; }
+    section { margin-bottom: 4rem; }
+    section:last-child { margin-bottom: 0; }
+
+    h2 {
+      font-size: 1.6rem; font-weight: 800;
+      margin-bottom: 1.25rem;
+      padding-bottom: .5rem;
+      border-bottom: 2px solid var(--indigo);
+      color: var(--text);
+    }
+    h3 {
+      font-size: 1.15rem; font-weight: 700;
+      margin: 1.75rem 0 .75rem;
+      color: var(--text);
+    }
+    h3::before { content: '── '; color: var(--indigo-dark); font-weight: 400; }
+    p { margin-bottom: .85rem; }
+    a { color: var(--blue); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* ── Cards ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      box-shadow: var(--shadow);
+    }
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1rem;
+    }
+    .card-icon { font-size: 1.8rem; margin-bottom: .6rem; }
+    .card h4 { font-size: 1rem; font-weight: 700; margin-bottom: .4rem; }
+    .card p { font-size: .88rem; color: var(--text-muted); margin: 0; }
+
+    /* ── Compare grid ── */
+    .compare-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+    @media (max-width: 640px) { .compare-grid { grid-template-columns: 1fr; } }
+    .compare-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      overflow: hidden;
+    }
+    .compare-header { padding: .75rem 1.2rem; font-weight: 700; font-size: .88rem; }
+    .compare-header.bad  { background: #fff5f5; color: #c53030; }
+    .compare-header.good { background: #f0fff4; color: #276749; }
+    .compare-body { padding: .5rem 0; }
+    .compare-item {
+      display: flex; align-items: flex-start; gap: .6rem;
+      padding: .5rem 1.2rem;
+      font-size: .87rem;
+    }
+    .compare-item + .compare-item { border-top: 1px solid var(--border); }
+    .compare-icon { flex-shrink: 0; margin-top: .1rem; font-size: 1rem; }
+
+    /* ── Tables ── */
+    .table-wrap { overflow-x: auto; border-radius: var(--radius); border: 1px solid var(--border); }
+    table { border-collapse: collapse; width: 100%; background: var(--surface); font-size: .88rem; }
+    thead tr { background: #f1f5f9; }
+    th, td { padding: .65rem 1rem; text-align: left; border-bottom: 1px solid var(--border); }
+    tr:last-child td { border-bottom: none; }
+    th { font-weight: 700; font-size: .82rem; text-transform: uppercase; letter-spacing: .04em; color: var(--text-muted); }
+    td:first-child { font-weight: 600; }
+    .center { text-align: center; }
+
+    /* ── Code ── */
+    pre {
+      background: var(--code-bg);
+      color: var(--code-text);
+      border-radius: var(--radius);
+      padding: 1.25rem 1.5rem;
+      overflow-x: auto;
+      font-size: .82rem;
+      line-height: 1.6;
+      margin: .85rem 0;
+    }
+    code { font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace; }
+    p code, li code, td code {
+      background: #f1f5f9;
+      color: #be123c;
+      padding: .1em .4em;
+      border-radius: 4px;
+      font-size: .85em;
+    }
+    .code-label {
+      display: inline-block;
+      font-size: .72rem; font-weight: 700;
+      padding: .15rem .6rem;
+      border-radius: 4px 4px 0 0;
+      margin-bottom: -2px;
+    }
+    .code-label.bash   { background: #2d3748; color: #68d391; }
+    .code-label.yaml   { background: #2d3748; color: #f6e05e; }
+    .code-label.tree   { background: #2d3748; color: #90cdf4; }
+
+    /* ── Steps ── */
+    .steps { counter-reset: step; }
+    .step { display: flex; gap: 1.25rem; margin-bottom: 1.5rem; }
+    .step-num {
+      flex-shrink: 0; width: 2rem; height: 2rem;
+      background: var(--indigo); color: #fff; font-weight: 900; font-size: .85rem;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      margin-top: .15rem;
+    }
+    .step-body h4 { font-size: .95rem; font-weight: 700; margin-bottom: .4rem; }
+    .step-body p  { font-size: .88rem; color: var(--text-muted); margin: 0; }
+
+    /* ── Callout ── */
+    .callout {
+      display: flex; gap: .85rem;
+      padding: 1rem 1.25rem;
+      border-radius: var(--radius);
+      font-size: .88rem;
+      margin: 1rem 0;
+    }
+    .callout-icon { font-size: 1.2rem; flex-shrink: 0; }
+    .callout p { margin: 0; }
+    .callout-tip  { background: #f0fdf4; border: 1px solid #86efac; }
+    .callout-warn { background: #fffbeb; border: 1px solid #fcd34d; }
+    .callout-info { background: var(--indigo-soft); border: 1px solid #a5b4fc; }
+
+    /* ── Principle list ── */
+    .principle-list { display: flex; flex-direction: column; gap: .75rem; }
+    .principle {
+      display: flex; gap: 1rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--indigo);
+      border-radius: 0 var(--radius) var(--radius) 0;
+      padding: 1rem 1.25rem;
+    }
+    .principle-icon { font-size: 1.4rem; flex-shrink: 0; }
+    .principle-title { font-weight: 700; margin-bottom: .25rem; font-size: .95rem; }
+    .principle-desc  { font-size: .85rem; color: var(--text-muted); margin: 0; }
+
+    /* ── Docs grid ── */
+    .docs-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: .75rem;
+    }
+    .doc-item {
+      display: flex; gap: .85rem; align-items: flex-start;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: .85rem 1rem;
+      transition: border-color .15s, box-shadow .15s;
+    }
+    .doc-item:hover { border-color: var(--indigo); box-shadow: 0 2px 10px rgba(99,102,241,.12); }
+    .doc-num {
+      flex-shrink: 0;
+      background: var(--code-bg);
+      color: #a5b4fc;
+      font-size: .72rem; font-weight: 800; font-family: monospace;
+      padding: .2rem .5rem;
+      border-radius: 4px;
+      margin-top: .15rem;
+    }
+    .doc-title { font-weight: 700; font-size: .88rem; margin-bottom: .2rem; }
+    .doc-desc  { font-size: .8rem; color: var(--text-muted); }
+
+    /* ── Scenario cards ── */
+    .scenario-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1rem;
+      margin: 1rem 0;
+    }
+    .scenario-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-top: 3px solid var(--indigo);
+      border-radius: var(--radius);
+      padding: 1.1rem 1.25rem;
+    }
+    .scenario-label { font-size: .72rem; font-weight: 800; color: var(--indigo-dark); text-transform: uppercase; letter-spacing: .05em; margin-bottom: .4rem; }
+    .scenario-card h4 { font-size: .9rem; font-weight: 700; margin-bottom: .4rem; }
+    .scenario-card p  { font-size: .82rem; color: var(--text-muted); margin: 0; }
+
+    /* ── Footer ── */
+    footer {
+      background: var(--code-bg);
+      color: #8898aa;
+      text-align: center;
+      padding: 2.5rem 1.5rem;
+      font-size: .83rem;
+    }
+    footer strong { color: #a5b4fc; }
+
+    /* ── Responsive ── */
+    @media (max-width: 768px) {
+      main { padding: 2rem 1rem 4rem; }
+      h2   { font-size: 1.35rem; }
+    }
+    @media (max-width: 500px) {
+      .nav-logo span { display: none; }
+    }
+
+    /* ── Utility ── */
+    .check { color: var(--green); }
+    .cross { color: var(--red); }
+    .text-muted { color: var(--text-muted); font-size: .88rem; }
+  </style>
+</head>
+<body>
+
+<!-- ── Navigation ── -->
+<nav>
+  <div class="nav-inner">
+    <a class="nav-logo" href="#top">[OBS] <span>OBSERVER</span></a>
+    <ul class="nav-links">
+      <li><a href="#why">왜 OBSERVER?</a></li>
+      <li><a href="#pipeline">파이프라인</a></li>
+      <li><a href="#quickstart">빠른 시작</a></li>
+      <li><a href="#components">컴포넌트</a></li>
+      <li><a href="#integration">통합 계약</a></li>
+      <li><a href="#outputs">출력물</a></li>
+      <li><a href="#metrics">메트릭 &amp; 실패</a></li>
+      <li><a href="#ranking">랭킹</a></li>
+      <li><a href="#principles">핵심 원칙</a></li>
+      <li><a href="#docs">문서 색인</a></li>
+      <li><a href="#next-steps">역할별 가이드</a></li>
+    </ul>
+  </div>
+</nav>
+
+<!-- ── Hero ── -->
+<div class="hero" id="top">
+  <div class="hero-sigil">[OBS]</div>
+  <h1>OBSERVER<br><em>Automated Evaluation Pipeline</em></h1>
+  <p class="tagline">
+    영상 보지 말고, 데이터 읽자.<br>
+    체크포인트 자동 평가 · 실패 분류 · 다목적 랭킹 · HTML 리포트
+  </p>
+  <div class="hero-badges">
+    <span class="badge">Python 3.10+</span>
+    <span class="badge">Isaac Lab 2.x</span>
+    <span class="badge">Framework-Agnostic</span>
+    <span class="badge">Rule-based Classifier</span>
+    <span class="badge">MIT License</span>
+  </div>
+  <div class="hero-cta">
+    <a href="#quickstart" class="btn btn-primary">빠른 시작 →</a>
+    <a href="#pipeline"   class="btn btn-secondary">7단계 파이프라인 보기</a>
+  </div>
+</div>
+
+<!-- ── Main ── -->
+<main>
+
+  <!-- ── Why OBSERVER ── -->
+  <section id="why">
+    <h2>왜 OBSERVER인가?</h2>
+    <p>
+      Dexterous manipulation 연구는 체크포인트를 빠르게 쌓습니다 — reward shaping ablation, seed 민감도 실험, 커리큘럼 반복.
+      사람이 직접 영상을 보며 비교하는 방식에는 근본적인 한계가 있습니다.
+      <strong>OBSERVER는 정량적·자동화된 평가로 그 한계를 제거합니다.</strong>
+    </p>
+
+    <div class="compare-grid">
+      <div class="compare-card">
+        <div class="compare-header bad">❌ 수동 리뷰</div>
+        <div class="compare-body">
+          <div class="compare-item"><span class="compare-icon">📹</span><span>Isaac 뷰포트에서 30초 영상 시청</span></div>
+          <div class="compare-item"><span class="compare-icon">🤔</span><span>"오늘은 좀 더 안정적으로 보이는데..."</span></div>
+          <div class="compare-item"><span class="compare-icon">🎲</span><span>마지막에 본 영상이 가장 잘 기억됨 (최신 편향)</span></div>
+          <div class="compare-item"><span class="compare-icon">😴</span><span>20번째 리뷰는 첫 번째만큼 예리하지 않음 (피로)</span></div>
+          <div class="compare-item"><span class="compare-icon">🚨</span><span>slip, 관절 스파이크, 에너지 과다는 눈에 보이지 않음</span></div>
+        </div>
+      </div>
+      <div class="compare-card">
+        <div class="compare-header good">✅ OBSERVER</div>
+        <div class="compare-body">
+          <div class="compare-item"><span class="compare-icon">📊</span><span>8개 정량 지표 자동 집계</span></div>
+          <div class="compare-item"><span class="compare-icon">🔍</span><span>6-class 규칙 체인으로 실패 유형 자동 분류</span></div>
+          <div class="compare-item"><span class="compare-icon">🗺️</span><span>roll × pitch 히트맵으로 취약 포즈 구간 시각화</span></div>
+          <div class="compare-item"><span class="compare-icon">🏆</span><span>success_rate + slip + energy + pose error 다목적 랭킹</span></div>
+          <div class="compare-item"><span class="compare-icon">📄</span><span>차트·비디오·히트맵 포함 HTML 리포트 자동 생성</span></div>
+        </div>
+      </div>
+    </div>
+
+    <h3>평가 병목 시나리오</h3>
+    <div class="scenario-grid">
+      <div class="scenario-card">
+        <div class="scenario-label">🔬 Scenario A</div>
+        <h4>Ablation Study</h4>
+        <p>contact force weight × 4 / slip penalty × 3 / curriculum × 2 = 24개 설정. 체크포인트 1k·3k·5k·10k → <strong>96개.</strong> 당신에게는 오후 하나.</p>
+      </div>
+      <div class="scenario-card">
+        <div class="scenario-label">🎲 Scenario B</div>
+        <h4>Seed Sensitivity</h4>
+        <p>10개 시드로 재학습. 10개 실행의 수렴 패턴을 수동 비교하는 것은 <strong>인지적으로 불가능</strong>합니다.</p>
+      </div>
+      <div class="scenario-card">
+        <div class="scenario-label">🔁 Scenario C</div>
+        <h4>Reward Design Loop</h4>
+        <p>보상 함수 조정 → 밤새 학습 → 영상 시청 → 불확실 → 반복. 1주일 후 30개+ 체크포인트. <strong>어떤 보상이 효과가 있었고 왜인지?</strong></p>
+      </div>
+      <div class="scenario-card">
+        <div class="scenario-label">🧪 Scenario D</div>
+        <h4>Architecture Search</h4>
+        <p>네트워크 depth × 3 / latent dim × 4 / tactile 유무. 질문은 "무엇이 실패했고, <strong>포즈 공간의 어디에서</strong>" 입니다.</p>
+      </div>
+    </div>
+
+    <h3>success_rate 뒤에 숨은 위험들</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>숨겨진 문제</th><th>success_rate</th><th>실제 결과</th></tr></thead>
+        <tbody>
+          <tr><td>에피소드당 slip 3회</td><td class="center">표시 안 됨</td><td>수 시간 만에 손끝 액추에이터 마모</td></tr>
+          <tr><td>roll ∈ [−20°, 20°]에서만 동작</td><td class="center">표시 안 됨</td><td>암기, 일반화 아님 — 취약한 정책</td></tr>
+          <tr><td>특이점 근방 관절 속도 스파이크</td><td class="center">표시 안 됨</td><td>실제 로봇 하드웨어 안전 위험</td></tr>
+          <tr><td>에너지 소비 baseline 대비 5배</td><td class="center">표시 안 됨</td><td>배터리 방전, 발열 과부하</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout callout-warn" style="margin-top:1rem">
+      <span class="callout-icon">⚠️</span>
+      <p><strong>핵심 인사이트:</strong> 30초 뷰포트 영상에서 좋아 보이는 정책이 실제 하드웨어에서는 위험할 수 있습니다. 이 문제를 잡는 유일한 방법은 <strong>다수 에피소드에 걸친 체계적이고 정량적인 분석</strong>입니다.</p>
+    </div>
+  </section>
+
+  <!-- ── Pipeline ── -->
+  <section id="pipeline">
+    <h2>7단계 파이프라인</h2>
+    <p>명령 한 줄. 모든 것이 자동화됩니다.</p>
+
+    <div class="code-label bash">bash</div>
+    <pre><code>observer --checkpoint_dir runs/ --recursive \
+    --auto_select --select_weights hardware_safe</code></pre>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th class="center">#</th><th>단계</th><th>출력</th></tr></thead>
+        <tbody>
+          <tr><td class="center">1</td><td>📦 <strong>메트릭 수집</strong></td><td><code>metrics.json</code> — 8개 정량 지표</td></tr>
+          <tr><td class="center">2</td><td>🔍 <strong>실패 모드 분류</strong></td><td>6-class 규칙 체인, 학습 데이터 불필요</td></tr>
+          <tr><td class="center">3</td><td>🗺️ <strong>상태 커버리지 분석</strong></td><td>roll × pitch 성공 히트맵</td></tr>
+          <tr><td class="center">4</td><td>🎬 <strong>다각도 비디오 기록</strong></td><td>5 시점 + 2×3 그리드 mp4</td></tr>
+          <tr><td class="center">5</td><td>📡 <strong>실험 트래킹</strong></td><td>TensorBoard 자동 감지</td></tr>
+          <tr><td class="center">6</td><td>🏆 <strong>다목적 랭킹</strong></td><td>가중 점수: 성공률, slip, 에너지, 포즈 오차</td></tr>
+          <tr><td class="center">7</td><td>📄 <strong>HTML 리포트</strong></td><td>차트·파이·비디오·히트맵 포함 self-contained HTML</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>시스템 구조</h3>
+    <pre><code>observer.eval_runner
+    ├── PipelineOrchestrator (체크포인트당)
+    │     ├── MetricsCollector       → metrics.json
+    │     ├── FailureModeClassifier  → failure_distribution
+    │     ├── StateCoverageAnalyzer  → coverage/*.png
+    │     └── CameraController       (subprocess → Isaac)
+    │           └── VideoRecorder   → videos/*.mp4
+    ├── CheckpointSelector           (다목적 랭킹 → best/)
+    └── ReportGenerator              → eval_report.html</code></pre>
+  </section>
+
+  <!-- ── Quick Start ── -->
+  <section id="quickstart">
+    <h2>빠른 시작</h2>
+
+    <h3>설치</h3>
+    <div class="code-label bash">bash</div>
+    <pre><code># 핵심 의존성
+pip install numpy pyyaml matplotlib
+
+# 비디오 인코딩
+sudo apt install ffmpeg
+
+# 선택: 실험 트래킹
+pip install tensorboard
+
+# 선택: tactile 오버레이
+pip install opencv-python
+
+# observer CLI 설치
+git clone https://github.com/jonghochoi/observer.git
+cd observer
+pip install -e .</code></pre>
+
+    <h3>설치 확인</h3>
+    <div class="code-label bash">bash</div>
+    <pre><code>observer doctor</code></pre>
+    <p>설정 검증 결과가 출력됩니다. 오류가 있으면 메시지에 따라 조치하세요.</p>
+
+    <h3>실행 순서</h3>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <h4>드라이런 — 파이프라인 구조만 검증 (Isaac 실행 X)</h4>
+          <p><code>observer --checkpoint_dir runs/ --dry_run</code></p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <h4>단일 체크포인트</h4>
+          <p><code>observer --checkpoint runs/exp_001/model_5000.pth</code></p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <h4>디렉토리 전체 스윕</h4>
+          <p><code>observer --checkpoint_dir runs/exp_001/</code></p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <h4>여러 실험 재귀 + 최신 체크포인트만</h4>
+          <p><code>observer --checkpoint_dir runs/ --recursive --latest_only</code></p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">5</div>
+        <div class="step-body">
+          <h4>하드웨어 안전 우선 랭킹 + top-2 배포</h4>
+          <p><code>observer --checkpoint_dir runs/ --auto_select --select_weights hardware_safe --deploy_top_k 2</code></p>
+        </div>
+      </div>
+    </div>
+
+    <h3>실행 전 체크리스트</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>항목</th><th>확인 방법</th></tr></thead>
+        <tbody>
+          <tr><td><code>eval_config.yaml</code>의 <code>runtime.task</code> / <code>eval_module</code> / <code>record_script</code> 설정</td><td>sharpa 사용자: <code>docs/adapters/sharpa.md</code> 참고</td></tr>
+          <tr><td><code>runtime.isaac_lab_path</code>가 본인 환경에 맞게 설정</td><td><code>which isaaclab.sh</code></td></tr>
+          <tr><td>eval 스크립트가 <code>episodes.json</code> 스키마 만족</td><td><code>docs/20_INTEGRATION_CONTRACT.md</code> 참고</td></tr>
+          <tr><td>헤드리스 서버라면 가상 디스플레이 설정</td><td><code>Xvfb :99 -screen 0 1920x1080x24 &amp;</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout callout-info">
+      <span class="callout-icon">ℹ️</span>
+      <p>헤드리스 서버에서 비디오 기록 시: <code>Xvfb :99 -screen 0 1920x1080x24 &amp;</code> 후 <code>DISPLAY=:99 observer ...</code>로 실행하세요.</p>
+    </div>
+  </section>
+
+  <!-- ── Components ── -->
+  <section id="components">
+    <h2>컴포넌트 구조</h2>
+    <p>각 컴포넌트는 독립적이며, <code>PipelineOrchestrator</code>가 체크포인트당 이 단계들을 조율합니다.</p>
+
+    <div class="card-grid">
+      <div class="card">
+        <div class="card-icon">📦</div>
+        <h4>MetricsCollector</h4>
+        <p>에피소드 집계 지표 8개 수집. <code>episodes.json</code>에서 성공률·접촉력·slip 등을 계산해 <code>metrics.json</code>에 저장합니다.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">🔍</div>
+        <h4>FailureModeClassifier</h4>
+        <p>우선순위 규칙 체인으로 에피소드별 실패 유형 분류. 학습 데이터 불필요, 체크포인트 0부터 즉시 동작합니다.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">🗺️</div>
+        <h4>StateCoverageAnalyzer</h4>
+        <p>roll × pitch 초기 포즈 공간에서 정책이 어디서 실패하는지 히트맵으로 시각화합니다.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">🎬</div>
+        <h4>CameraController + VideoRecorder</h4>
+        <p>Isaac Sim 5개 시점(front, side, top 등) + 2×3 그리드 비디오 저장. Replicator 기반 캡처.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">📡</div>
+        <h4>ExperimentTracker</h4>
+        <p>TensorBoard 자동 감지 및 로깅. <code>tensorboard</code>가 없으면 조용히 건너뜁니다.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">🏆</div>
+        <h4>CheckpointSelector</h4>
+        <p>다목적 가중치 점수로 top-k 체크포인트 선정. 프리셋: <code>balanced</code> / <code>hardware_safe</code> / <code>performance_first</code>.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">📄</div>
+        <h4>ReportGenerator</h4>
+        <p>차트·파이 그래프·비디오·히트맵이 포함된 self-contained HTML 리포트. 브라우저 하나로 모든 결과를 봅니다.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">🔄</div>
+        <h4>PipelineOrchestrator</h4>
+        <p>체크포인트 1개당 위 단계들을 순서대로 조율. 에러가 발생해도 다음 체크포인트로 계속 진행합니다.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Integration ── -->
+  <section id="integration">
+    <h2>통합 계약 (Integration Contract)</h2>
+    <p>
+      OBSERVER는 사용자의 policy를 직접 로드하지 않습니다.
+      <strong>eval 스크립트와 record 스크립트를 서브프로세스로 실행</strong>하고,
+      두 스크립트가 정해진 계약(contract)을 만족하기만 하면 됩니다.
+      어떤 프레임워크(PPO, RSL-RL, CleanRL 등)든 동작합니다.
+    </p>
+
+    <div class="callout callout-tip">
+      <span class="callout-icon">💡</span>
+      <p>계약의 핵심: eval 스크립트가 <code>metrics.json</code>과 <code>episodes.json</code>을 지정된 스키마로 출력하면 됩니다. 나머지는 OBSERVER가 처리합니다.</p>
+    </div>
+
+    <h3>설정 파일</h3>
+    <div class="code-label yaml">yaml</div>
+    <pre><code># observer/configs/eval_config.yaml
+runtime:
+  task:          "&lt;your-task-id&gt;"
+  eval_module:   "your_pkg.scripts.eval"     # python -m 으로 실행
+  record_script: "your_pkg/scripts/record.py"
+  isaac_lab_path: "${ISAACLAB_PATH}/isaaclab.sh"</code></pre>
+
+    <h3>eval 스크립트가 출력해야 하는 것</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>파일</th><th>필수 여부</th><th>필수 필드</th></tr></thead>
+        <tbody>
+          <tr><td><code>metrics.json</code></td><td class="center check">✅ 필수</td><td><code>checkpoint</code>, <code>num_episodes</code>, <code>success_rate</code></td></tr>
+          <tr><td><code>episodes.json</code></td><td class="center">권장</td><td><code>length</code>, <code>success</code> per episode — 실패 분류·히트맵에 필요</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>어댑터 예시 (sharpa-rl-lab)</h3>
+    <p>실제 통합 예시는 <code>docs/adapters/sharpa.md</code>를 참고하세요. 새 프레임워크 어댑터 작성 가이드는 <code>docs/21_ADAPTER_GUIDE.md</code>에 있습니다.</p>
+
+    <div class="callout callout-info">
+      <span class="callout-icon">ℹ️</span>
+      <p>policy 로딩 실패 시: OBSERVER는 policy를 직접 로드하지 않습니다. <code>runtime.eval_module</code>에 지정된 <em>사용자 측 스크립트</em>가 체크포인트·normalization 복원을 담당합니다.</p>
+    </div>
+  </section>
+
+  <!-- ── Outputs ── -->
+  <section id="outputs">
+    <h2>출력물 읽는 법</h2>
+
+    <h3>디렉토리 구조</h3>
+    <div class="code-label tree">tree</div>
+    <pre><code>eval_results/
+├── eval_report.html                    ← 브라우저에서 열기 (시작점)
+├── best/
+│   ├── rank01__model_6000.pth          원본으로 심볼릭 링크
+│   ├── rank02__model_4000.pth
+│   └── selection_meta.json             점수 + 지표 상세
+└── exp_001__model_5000__YYYYMMDD_HHMMSS/
+    ├── eval_config_snapshot.yaml       재현성용 설정 스냅샷
+    ├── metrics.json                    에피소드 집계 지표
+    ├── episodes.json                   에피소드별 원본 (있을 때)
+    ├── coverage/
+    │   ├── success_heatmap.png         roll × pitch 성공률
+    │   ├── coverage_scatter.png        실패 모드별 색상
+    │   └── pose_histogram.png          샘플링 분포
+    └── videos/
+        ├── front.mp4 / side.mp4 / top.mp4
+        └── combined_grid.mp4           모든 뷰 한 파일</code></pre>
+
+    <h3>지표 해석</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>지표</th><th>단위</th><th>이게 나쁘면</th></tr></thead>
+        <tbody>
+          <tr><td><code>slip_events_per_episode</code></td><td>count</td><td>손끝 액추에이터 마모 — 하드웨어 위험 신호</td></tr>
+          <tr><td><code>joint_velocity_rms</code></td><td>rad/s</td><td>제어 불안정 / 특이점 근접</td></tr>
+          <tr><td><code>contact_force_rms</code></td><td>N</td><td>쥐는 힘 과다 또는 불안정</td></tr>
+          <tr><td><code>energy_J</code></td><td>J</td><td>배터리·발열 문제, 정책 비효율</td></tr>
+          <tr><td><code>object_pos_error_mm</code></td><td>mm</td><td>최종 위치 목표 도달 실패</td></tr>
+          <tr><td><code>object_rot_error_deg</code></td><td>deg</td><td>최종 회전 목표 도달 실패</td></tr>
+          <tr><td><code>mean_episode_length</code></td><td>steps</td><td>짧으면 초기 그립 실패 가능성</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>히트맵 읽기</h3>
+    <p>🔴 <strong>빨간 구역 = 다음 커리큘럼 타깃.</strong></p>
+    <p>roll ∈ [30°, 60°]에서 실패가 집중된다면 → 다음 학습에서 해당 범위를 더 많이 샘플링하세요.</p>
+  </section>
+
+  <!-- ── Metrics & Failure ── -->
+  <section id="metrics">
+    <h2>메트릭 &amp; 실패 분류</h2>
+
+    <h3>6-class 실패 모드 (우선순위 순)</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th class="center">우선순위</th><th>모드</th><th>규칙</th><th>하드웨어 의미</th></tr></thead>
+        <tbody>
+          <tr><td class="center">1</td><td><code>early_drop</code></td><td>에피소드 길이 &lt; 50 스텝</td><td>그립 초기화 실패</td></tr>
+          <tr><td class="center">2</td><td><code>singularity_hit</code></td><td>최대 관절 속도 &gt; 5 rad/s</td><td>액추에이터 과부하 위험</td></tr>
+          <tr><td class="center">3</td><td><code>late_slip</code></td><td>slip 이벤트 ≥ 3</td><td>점진적 그립 저하</td></tr>
+          <tr><td class="center">4</td><td><code>contact_loss</code></td><td>후반부 평균 접촉력 &lt; 0.01 N</td><td>손끝 접촉 상실</td></tr>
+          <tr><td class="center">5</td><td><code>repose_failure</code></td><td>최종 포즈 오차 &gt; 임계값</td><td>안정적 그립에도 불구한 태스크 실패</td></tr>
+          <tr><td class="center">6</td><td><code>timeout</code></td><td>최대 스텝 도달, 다른 규칙 없음</td><td>정책이 너무 느리거나 stuck</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>실패 분포로 할 일 정하기</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>지배적 실패 모드</th><th>권장 조치</th></tr></thead>
+        <tbody>
+          <tr><td><code>late_slip</code> 비중 높음</td><td>보상 함수의 <strong>slip penalty</strong> 강화</td></tr>
+          <tr><td><code>early_drop</code> 많음</td><td>초기 그립 / 커리큘럼 설계 재검토</td></tr>
+          <tr><td><code>singularity_hit</code> 많음</td><td>관절 속도 제한 / 특이점 회피 보상 추가</td></tr>
+          <tr><td><code>contact_loss</code> 많음</td><td>접촉력 보상 강화</td></tr>
+          <tr><td><code>repose_failure</code> 많음</td><td>목표 포즈 오차 보상 조정</td></tr>
+          <tr><td><code>timeout</code> 압도적</td><td>커리큘럼 단순화 또는 탐색 개선</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout callout-tip">
+      <span class="callout-icon">💡</span>
+      <p>분류기는 학습 데이터가 없습니다. 체크포인트 0부터 즉시 사용 가능하고, 분류 근거가 완전히 설명 가능합니다 — "rule 3 매칭으로 <code>late_slip</code> 분류됨."</p>
+    </div>
+  </section>
+
+  <!-- ── Ranking ── -->
+  <section id="ranking">
+    <h2>체크포인트 랭킹</h2>
+    <p>단일 <code>success_rate</code>로 체크포인트를 선택하면 하드웨어에 위험한 정책을 배포할 수 있습니다. OBSERVER는 여러 지표를 가중 합산해 랭킹합니다.</p>
+
+    <h3>점수 공식</h3>
+    <div class="card" style="font-size:.9rem; font-family:monospace; background:#f8fafc;">
+      Score = w<sub>sr</sub> · SR<sub>norm</sub> − w<sub>slip</sub> · slip<sub>norm</sub> − w<sub>energy</sub> · E<sub>norm</sub> − w<sub>pos</sub> · pos_err<sub>norm</sub>
+    </div>
+    <p style="margin-top:.75rem">각 지표는 평가 배치 내 min–max 범위로 정규화됩니다.</p>
+
+    <h3>프리셋 선택</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>프리셋</th><th>언제 사용</th><th>특징</th></tr></thead>
+        <tbody>
+          <tr><td><code>balanced</code></td><td>평소 실험 비교</td><td>모든 지표 균등 가중</td></tr>
+          <tr><td><code>hardware_safe</code></td><td>실제 하드웨어 배포 직전</td><td>slip + energy 패널티 큼</td></tr>
+          <tr><td><code>performance_first</code></td><td>ablation 연구, 순수 성공률 중심</td><td>success_rate 비중 최대화</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>랭킹 실행</h3>
+    <div class="code-label bash">bash</div>
+    <pre><code># hardware_safe 프리셋으로 랭킹 + top-2 배포
+observer --checkpoint_dir runs/ \
+    --auto_select --select_weights hardware_safe --deploy_top_k 2
+
+# 결과
+# eval_results/best/rank01__model_6000.pth  ← 1위
+# eval_results/best/rank02__model_4000.pth  ← 2위
+# eval_results/best/selection_meta.json      ← 점수 + 지표 상세</code></pre>
+
+    <h3>상태 커버리지 히트맵</h3>
+    <p>
+      <code>StateCoverageAnalyzer</code>는 roll × pitch 초기 포즈 공간을 격자로 나눠 <strong>정책이 어디서 취약한지</strong> 시각화합니다.
+      <code>episodes.json</code>에 <code>init_roll_deg</code> / <code>init_pitch_deg</code>가 있어야 생성됩니다.
+    </p>
+  </section>
+
+  <!-- ── Principles ── -->
+  <section id="principles">
+    <h2>핵심 설계 원칙</h2>
+    <p>OBSERVER의 비자명한 설계 결정들입니다. 이 원칙들이 존재하는 이유를 이해하면 통합 시 시행착오가 줄어듭니다.</p>
+
+    <div class="principle-list">
+      <div class="principle">
+        <div class="principle-icon">🔲</div>
+        <div>
+          <div class="principle-title">서브프로세스 경계 — policy를 직접 로드하지 않음</div>
+          <p class="principle-desc">OBSERVER는 eval 스크립트와 record 스크립트를 서브프로세스로 실행합니다. 크로스-프레임워크 호환성 문제를 완전히 회피하고, OBSERVER 코드에 프레임워크별 import가 없으며, 사용자 스택과의 버전 충돌이 없습니다.</p>
+        </div>
+      </div>
+      <div class="principle">
+        <div class="principle-icon">🌐</div>
+        <div>
+          <div class="principle-title">프레임워크 무관 (Framework-Agnostic)</div>
+          <p class="principle-desc">PPO / RSL-RL / CleanRL / 어떤 프레임워크든 동작합니다. 요구사항은 eval 스크립트가 <code>metrics.json</code>과 <code>episodes.json</code>을 지정된 스키마로 출력하는 것뿐입니다.</p>
+        </div>
+      </div>
+      <div class="principle">
+        <div class="principle-icon">📋</div>
+        <div>
+          <div class="principle-title">규칙 기반 실패 분류 — 학습 데이터 없음</div>
+          <p class="principle-desc"><code>FailureModeClassifier</code>는 학습 데이터를 사용하지 않습니다. 우선순위 규칙 체인으로 동작하며 체크포인트 0부터 즉시 사용 가능합니다. ML 기반 분류기의 부트스트랩 문제가 없고, 모든 결정이 완전히 설명 가능합니다.</p>
+        </div>
+      </div>
+      <div class="principle">
+        <div class="principle-icon">🧩</div>
+        <div>
+          <div class="principle-title">선택적 의존성 패턴 (Optional Deps)</div>
+          <p class="principle-desc"><code>tensorboard</code>와 <code>opencv-python</code>은 선택적입니다. 없으면 해당 기능이 조용히 건너뛰어집니다. 핵심 기능은 최소 의존성으로 동작합니다.</p>
+        </div>
+      </div>
+      <div class="principle">
+        <div class="principle-icon">🔑</div>
+        <div>
+          <div class="principle-title">지표 키 폴백 — 필드 누락 시 계속 진행</div>
+          <p class="principle-desc"><code>metrics.json</code>에 필드가 없으면 해당 분석을 건너뛰고 나머지를 계속 처리합니다. 필수 필드는 <code>checkpoint</code>, <code>num_episodes</code>, <code>success_rate</code> 셋뿐입니다.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Docs Index ── -->
+  <section id="docs">
+    <h2>문서 색인</h2>
+    <p>파일명 숫자 접두사가 읽는 순서를 나타냅니다. <strong>모든 팀원은 <code>00_PRINCIPLES.md</code>를 먼저 읽으세요.</strong></p>
+
+    <div class="docs-grid">
+      <div class="doc-item">
+        <span class="doc-num">00</span>
+        <div>
+          <div class="doc-title">PRINCIPLES</div>
+          <div class="doc-desc">평가가 중요한 이유, 수동 리뷰의 한계, 핵심 설계 결정. 모든 문서의 기준점.</div>
+        </div>
+      </div>
+      <div class="doc-item">
+        <span class="doc-num">10</span>
+        <div>
+          <div class="doc-title">ARCHITECTURE</div>
+          <div class="doc-desc">전체 시스템 구조, 컴포넌트 맵, 파일 구조, 출력 디렉토리.</div>
+        </div>
+      </div>
+      <div class="doc-item">
+        <span class="doc-num">20</span>
+        <div>
+          <div class="doc-title">INTEGRATION_CONTRACT</div>
+          <div class="doc-desc">eval/record 스크립트 계약 — 프레임워크를 붙일 때 이 계약만 맞추면 됩니다.</div>
+        </div>
+      </div>
+      <div class="doc-item">
+        <span class="doc-num">21</span>
+        <div>
+          <div class="doc-title">ADAPTER_GUIDE</div>
+          <div class="doc-desc">새 프레임워크 어댑터 작성 단계별 가이드.</div>
+        </div>
+      </div>
+      <div class="doc-item">
+        <span class="doc-num">22</span>
+        <div>
+          <div class="doc-title">EXTERNAL_LOGGER_HANDOFF</div>
+          <div class="doc-desc">OBSERVER 출력을 MLflow, W&amp;B 등 외부 로거로 전달하는 방법 (<code>result_locator</code>).</div>
+        </div>
+      </div>
+      <div class="doc-item">
+        <span class="doc-num">23</span>
+        <div>
+          <div class="doc-title">ENV_INSTRUMENTATION</div>
+          <div class="doc-desc"><code>info</code>가 env → eval CLI → <code>episodes.json</code> → OBSERVER로 흐르는 경로. 필수 키, per-env vs scalar 계약.</div>
+        </div>
+      </div>
+      <div class="doc-item">
+        <span class="doc-num">30</span>
+        <div>
+          <div class="doc-title">METRICS_REFERENCE</div>
+          <div class="doc-desc">8개 지표 + 6-class 실패 분류 전체 레퍼런스.</div>
+        </div>
+      </div>
+      <div class="doc-item">
+        <span class="doc-num">31</span>
+        <div>
+          <div class="doc-title">CHECKPOINT_RANKING</div>
+          <div class="doc-desc">다목적 랭킹 알고리즘 + 상태 커버리지 분석 상세.</div>
+        </div>
+      </div>
+      <div class="doc-item">
+        <span class="doc-num">🔌</span>
+        <div>
+          <div class="doc-title">adapters/sharpa.md</div>
+          <div class="doc-desc">sharpa-rl-lab 통합 예시 — 새 어댑터의 템플릿.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Next Steps ── -->
+  <section id="next-steps">
+    <h2>역할별 다음 단계</h2>
+    <p>이 가이드를 읽었다면, 역할에 맞는 문서로 이동하세요.</p>
+
+    <div class="docs-grid">
+      <div class="doc-item">
+        <span class="doc-num">🔧</span>
+        <div>
+          <div class="doc-title">본인 프레임워크를 OBSERVER에 붙이려는 사람</div>
+          <div class="doc-desc"><code>20_INTEGRATION_CONTRACT</code> → <code>21_ADAPTER_GUIDE</code> → <code>adapters/sharpa.md</code> (예시)</div>
+        </div>
+      </div>
+      <div class="doc-item">
+        <span class="doc-num">📊</span>
+        <div>
+          <div class="doc-title">새 지표 또는 실패 모드를 추가하려는 사람</div>
+          <div class="doc-desc"><code>30_METRICS_REFERENCE</code> → <code>10_ARCHITECTURE</code> (컴포넌트 맵) → <code>CLAUDE.md</code> (체크리스트)</div>
+        </div>
+      </div>
+      <div class="doc-item">
+        <span class="doc-num">🔗</span>
+        <div>
+          <div class="doc-title">OBSERVER 출력을 MLflow / W&amp;B로 보내려는 사람</div>
+          <div class="doc-desc"><code>22_EXTERNAL_LOGGER_HANDOFF</code> — <code>result_locator</code>로 출력 경로 탐색 + 글루 스크립트 작성</div>
+        </div>
+      </div>
+      <div class="doc-item">
+        <span class="doc-num">🖥️</span>
+        <div>
+          <div class="doc-title">헤드리스 서버 / CI 환경에서 운영하려는 사람</div>
+          <div class="doc-desc">Xvfb 가상 디스플레이 설정 → <code>observer doctor</code>로 환경 검증 → <code>--dry_run</code>으로 파이프라인 사전 확인</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Troubleshooting ── -->
+  <section id="troubleshooting">
+    <h2>트러블슈팅</h2>
+
+    <h3>GUI 없는 서버에서 비디오가 안 찍힘</h3>
+    <div class="code-label bash">bash</div>
+    <pre><code>Xvfb :99 -screen 0 1920x1080x24 &amp;
+DISPLAY=:99 observer --checkpoint_dir runs/</code></pre>
+
+    <h3>정책 로딩 실패</h3>
+    <p>OBSERVER는 policy를 직접 로드하지 않습니다. <code>runtime.eval_module</code>에 지정된 사용자 측 스크립트가 체크포인트·normalization 복원을 담당합니다. <code>docs/20_INTEGRATION_CONTRACT.md</code> §1 참조.</p>
+
+    <h3>coverage / 실패 분류가 비어있음</h3>
+    <p>대부분 <code>episodes.json</code> 생성 실패가 원인입니다. eval 스크립트가 해당 파일을 쓰는지, 스키마가 <code>EpisodeStats</code>와 맞는지 확인하세요. sharpa 사용자: <code>docs/adapters/sharpa.md</code> 트러블슈팅 섹션 참고.</p>
+
+    <h3>success_rate가 0.0으로 나옴</h3>
+    <p>체크포인트 로딩 또는 observation normalization 복원 실패입니다. eval 스크립트를 단독 실행해서 확인하세요:</p>
+    <div class="code-label bash">bash</div>
+    <pre><code>python -m &lt;eval_module&gt; --task=... --load_path=... --num_episodes=5 \
+    --metrics_output=/tmp/m.json --episodes_output=/tmp/ep.json --headless
+cat /tmp/m.json | python -m json.tool</code></pre>
+  </section>
+
+</main>
+
+<!-- ── Footer ── -->
+<footer>
+  <p><strong>[OBS] OBSERVER</strong> — Automated Evaluation Pipeline</p>
+  <p style="margin-top:.5rem">Python 3.10+ · Isaac Lab 2.x · Framework-Agnostic · MIT License</p>
+</footer>
+
+</body>
+</html>
